@@ -1,0 +1,6 @@
+@Learnify_backend_HostAddress = http://localhost:5098
+
+GET {{Learnify_backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

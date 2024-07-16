@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35004.147
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Learnify-backend", "Learnify-backend\Learnify-backend.csproj", "{3A8F325F-57A1-4316-8CE8-C9A746C0F94B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3A8F325F-57A1-4316-8CE8-C9A746C0F94B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A8F325F-57A1-4316-8CE8-C9A746C0F94B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A8F325F-57A1-4316-8CE8-C9A746C0F94B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A8F325F-57A1-4316-8CE8-C9A746C0F94B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F0776E21-8A2E-4AD5-9369-B7C958B3CD49}
+	EndGlobalSection
+EndGlobal
