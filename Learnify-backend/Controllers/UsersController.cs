@@ -42,12 +42,21 @@ namespace Learnify_backend.Controllers
             return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
         }
 
-        // PUT api/<UsersController>/5
+        // PUT api/<UsersController>
         [HttpPut]
         public async Task<ActionResult> UpdateUser(User user)
         {
             var filter = Builders<User>.Filter.Eq(x => x.Id, user.Id);
             await _users.ReplaceOneAsync(filter, user);
+            return Ok();
+        }
+
+        // DELETE api/<UsersController>/5
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteUser(string id)
+        {
+            var filter = Builders<User>.Filter.Eq(x => x.Id, id);
+            await _users.DeleteOneAsync(filter);
             return Ok();
         }
     }
