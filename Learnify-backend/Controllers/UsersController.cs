@@ -33,5 +33,13 @@ namespace Learnify_backend.Controllers
             var user = _users.Find(filter).FirstOrDefault();
             return user is not null ? Ok(user) : NotFound();
         }
+
+        // POST api/<UsersController>
+        [HttpPost]
+        public async Task<ActionResult> CreateUser(User user)
+        {
+            await _users.InsertOneAsync(user);
+            return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
+        }
     }
 }
