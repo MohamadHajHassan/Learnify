@@ -24,5 +24,14 @@ namespace Learnify_backend.Controllers
         {
             return await _users.Find(FilterDefinition<User>.Empty).ToListAsync();
         }
+
+        // GET api/<UsersController>/5
+        [HttpGet("{id}")]
+        public ActionResult<User> GetById(string id)
+        {
+            var filter = Builders<User>.Filter.Eq(x => x.Id, id);
+            var user = _users.Find(filter).FirstOrDefault();
+            return user is not null ? Ok(user) : NotFound();
+        }
     }
 }
