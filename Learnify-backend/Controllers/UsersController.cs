@@ -41,5 +41,14 @@ namespace Learnify_backend.Controllers
             await _users.InsertOneAsync(user);
             return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
         }
+
+        // PUT api/<UsersController>/5
+        [HttpPut]
+        public async Task<ActionResult> UpdateUser(User user)
+        {
+            var filter = Builders<User>.Filter.Eq(x => x.Id, user.Id);
+            await _users.ReplaceOneAsync(filter, user);
+            return Ok();
+        }
     }
 }
