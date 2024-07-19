@@ -3,6 +3,12 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace Learnify_backend.Entities
 {
+    public enum DifficultyLevel
+    {
+        Beginner,
+        Intermediate,
+        Advanced
+    }
     public class Course
     {
         [BsonId]
@@ -17,11 +23,11 @@ namespace Learnify_backend.Entities
         public string? Description { get; set; }
 
         [BsonRequired]
-        [BsonElement("category"), BsonRepresentation(BsonType.String)]
-        public string? Category { get; set; }
+        [BsonElement("categories"), BsonRepresentation(BsonType.Array)]
+        public IEnumerable<string> Categories { get; set; } = new List<string>();
 
         [BsonElement("difficultyLevel"), BsonRepresentation(BsonType.String)]
-        public string? DifficultyLevel { get; set; }
+        public DifficultyLevel DifficultyLevel { get; set; }
 
         [BsonElement("duration"), BsonRepresentation(BsonType.Double)]
         public double? Duration { get; set; }
@@ -29,8 +35,8 @@ namespace Learnify_backend.Entities
         [BsonElement("syllabus"), BsonRepresentation(BsonType.String)]
         public string? Syllabus { get; set; }
 
-        [BsonElement("preRequisites"), BsonRepresentation(BsonType.String)]
-        public List<ObjectId>? PreRequisites { get; set; } = new List<ObjectId>();
+        [BsonElement("preRequisites"), BsonRepresentation(BsonType.Array)]
+        public IEnumerable<ObjectId> PreRequisites { get; set; } = new List<ObjectId>();
 
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         [BsonElement("createdOn"), BsonRepresentation(BsonType.DateTime)]
@@ -40,6 +46,14 @@ namespace Learnify_backend.Entities
         [BsonElement("UpdatedOn"), BsonRepresentation(BsonType.DateTime)]
         public DateTime UpdatedOn { get; set; } = DateTime.UtcNow;
 
-        public User? Instuctor { get; set; }
+        [BsonRequired]
+        [BsonElement("instructorId"), BsonRepresentation(BsonType.ObjectId)]
+        public required string InstructorId { get; set; }
+
+        [BsonElement("reviews"), BsonRepresentation(BsonType.Array)]
+        public IEnumerable<Review> Reviews { get; set; } = new List<Review>();
+
+        [BsonElement("averageRating"), BsonRepresentation(BsonType.Double)]
+        public double? AverageRating { get; set; }
     }
 }
