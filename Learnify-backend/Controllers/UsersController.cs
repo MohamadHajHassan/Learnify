@@ -42,6 +42,35 @@ namespace Learnify_backend.Controllers
             return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
         }
 
+        [HttpPost("register")]
+        public async Task<ActionResult> RegisterUser(
+            [FromBody] RegisterUserRequest request)
+        {
+            var existingUser = _users.Find(x => x.Email == request.Email).FirstOrDefault();
+            if (existingUser != null)
+            {
+                return BadRequest("User with this email already exists!");
+            }
+
+            if (request.Password != request.ConfirmPassword)
+            {
+                return BadRequest("Passwords do not match!");
+            }
+
+            var HashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
+            var user = new User
+            {
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                Email = request.Email,
+                Password = HashedPassword,
+                Role = "student"
+            };
+            await _users.InsertOneAsync(user);
+            return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
+        }
+
         // PUT api/<UsersController>
         [HttpPut]
         public async Task<ActionResult> UpdateUser(User user)
@@ -59,5 +88,14 @@ namespace Learnify_backend.Controllers
             await _users.DeleteOneAsync(filter);
             return Ok();
         }
+    }
+
+    public class RegisterUserRequest
+    {
+        public required string Email { get; set; }
+        public required string Password { get; set; }
+        public required string ConfirmPassword { get; set; }
+        public required string FirstName { get; set; }
+        public required string LastName { get; set; }
     }
 }
