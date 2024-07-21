@@ -32,7 +32,7 @@ namespace Learnify_backend.Entities
         public string? Syllabus { get; set; }
 
         [BsonElement("preRequisites"), BsonRepresentation(BsonType.String)]
-        public IEnumerable<ObjectId> PreRequisites { get; set; } = new List<ObjectId>();
+        public IEnumerable<string> PreRequisites { get; set; } = new List<string>();
 
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         [BsonElement("createdOn"), BsonRepresentation(BsonType.DateTime)]
@@ -47,7 +47,7 @@ namespace Learnify_backend.Entities
         public required string InstructorId { get; set; }
 
         [BsonElement("reviewsId"), BsonRepresentation(BsonType.String)]
-        public IEnumerable<ObjectId> ReviewsId { get; set; } = new List<ObjectId>();
+        public IEnumerable<string> ReviewsId { get; set; } = new List<string>();
 
         [BsonElement("averageRating"), BsonRepresentation(BsonType.Double)]
         public double? AverageRating { get; set; }
