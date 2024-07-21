@@ -97,6 +97,42 @@ namespace Learnify_backend.Controllers
             return Ok();
         }
 
+        [HttpPut("{userId}")]
+        public async Task<ActionResult> UpdateUserInfo(string userId, [FromBody] UpdateUserInfoRequest request)
+        {
+            var filter = Builders<User>.Filter.Eq(x => x.Id, userId);
+
+            var user = await _users.Find(filter).FirstOrDefaultAsync();
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            if (!string.IsNullOrEmpty(request.FirstName))
+            {
+                user.FirstName = request.FirstName;
+            }
+
+            if (!string.IsNullOrEmpty(request.LastName))
+            {
+                user.LastName = request.LastName;
+            }
+
+            if (!string.IsNullOrEmpty(request.ProfilePicture))
+            {
+                user.ProfilePicture = request.ProfilePicture;
+            }
+
+            if (!string.IsNullOrEmpty(request.Password))
+            {
+                user.Password = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            }
+
+            await _users.ReplaceOneAsync(filter, user);
+            return Ok();
+        }
+
         // DELETE api/<UsersController>/5
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteUser(string id)
@@ -120,5 +156,13 @@ namespace Learnify_backend.Controllers
     {
         public required string Email { get; set; }
         public required string Password { get; set; }
+    }
+
+    public class UpdateUserInfoRequest
+    {
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public string? ProfilePicture { get; set; }
+        public string? Password { get; set; }
     }
 }
