@@ -9,9 +9,6 @@ namespace Learnify_backend.Entities
         [BsonElement("_id"), BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
 
-        [BsonElement("username"), BsonRepresentation(BsonType.String)]
-        public string? Username { get; set; }
-
         [BsonRequired]
         [BsonElement("email"), BsonRepresentation(BsonType.String)]
         public string? Email { get; set; }
@@ -30,7 +27,7 @@ namespace Learnify_backend.Entities
         public string? ProfilePicture { get; set; }
 
         [BsonElement("role"), BsonRepresentation(BsonType.String)]
-        public string? Role { get; set; }  // "student", "instructor", "admin"
+        public string? Role { get; set; }  // "student", "admin"
 
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         [BsonElement("createdOn"), BsonRepresentation(BsonType.DateTime)]
