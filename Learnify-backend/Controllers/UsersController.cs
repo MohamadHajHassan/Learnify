@@ -71,6 +71,23 @@ namespace Learnify_backend.Controllers
             return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
         }
 
+        [HttpPost("login")]
+        public ActionResult<User> LoginUser([FromBody] LoginUserRequest request)
+        {
+            var user = _users.Find(x => x.Email == request.Email).FirstOrDefault();
+            if (user == null)
+            {
+                return BadRequest("Invalid Credentials!");
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
+            {
+                return BadRequest("Invalid Credentials!");
+            }
+
+            return Ok(user);
+        }
+
         // PUT api/<UsersController>
         [HttpPut]
         public async Task<ActionResult> UpdateUser(User user)
@@ -97,5 +114,11 @@ namespace Learnify_backend.Controllers
         public required string ConfirmPassword { get; set; }
         public required string FirstName { get; set; }
         public required string LastName { get; set; }
+    }
+
+    public class LoginUserRequest
+    {
+        public required string Email { get; set; }
+        public required string Password { get; set; }
     }
 }
