@@ -12,10 +12,12 @@ namespace Learnify_backend.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IMongoCollection<User> _users;
+        private readonly JWTTokenGenerator _jwtToken;
 
-        public UsersController(MongoDbService mongoDbService)
+        public UsersController(MongoDbService mongoDbService, JWTTokenGenerator jwtToken)
         {
             _users = mongoDbService.Database.GetCollection<User>("users");
+            _jwtToken = jwtToken;
         }
 
         // GET: api/<UsersController>
@@ -72,7 +74,8 @@ namespace Learnify_backend.Controllers
         }
 
         [HttpPost("login")]
-        public ActionResult<User> LoginUser([FromBody] LoginUserRequest request)
+
+        public ActionResult<LoginResponse> LoginUser([FromBody] LoginUserRequest request)
         {
             var user = _users.Find(x => x.Email == request.Email).FirstOrDefault();
             if (user == null)
@@ -85,7 +88,15 @@ namespace Learnify_backend.Controllers
                 return BadRequest("Invalid Credentials!");
             }
 
-            return Ok(user);
+            var token = _jwtToken.GenerateJwtToken(user);
+
+            var loginResponse = new LoginResponse
+            {
+                user = user,
+                token = token
+            };
+
+            return Ok(loginResponse);
         }
 
         // PUT api/<UsersController>
@@ -164,5 +175,10 @@ namespace Learnify_backend.Controllers
         public string? LastName { get; set; }
         public string? ProfilePicture { get; set; }
         public string? Password { get; set; }
+    }
+    public class LoginResponse
+    {
+        public User user { get; set; }
+        public string token { get; set; }
     }
 }
