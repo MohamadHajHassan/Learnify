@@ -136,6 +136,11 @@ namespace Learnify_backend.Controllers
                 return BadRequest("Invalid Credentials!");
             }
 
+            if (!user.IsEmailConfirmed)
+            {
+                return BadRequest("Please confirm your email address to login.");
+            }
+
             var token = _jwtToken.GenerateJwtToken(user);
 
             var loginResponse = new LoginResponse
