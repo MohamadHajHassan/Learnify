@@ -29,6 +29,12 @@ namespace Learnify_backend.Entities
         [BsonElement("role"), BsonRepresentation(BsonType.String)]
         public string? Role { get; set; }  // "student", "admin"
 
+        [BsonElement("isEmailConfirmed"), BsonRepresentation(BsonType.Boolean)]
+        public bool IsEmailConfirmed { get; set; } = false;
+
+        [BsonElement("emailConfirmationToken"), BsonRepresentation(BsonType.String)]
+        public string? EmailConfirmationToken { get; set; }
+
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         [BsonElement("createdOn"), BsonRepresentation(BsonType.DateTime)]
         public DateTime CreatedOn { get; set; } = DateTime.UtcNow;

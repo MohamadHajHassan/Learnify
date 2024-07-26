@@ -1,7 +1,9 @@
 ﻿using Learnify_backend.Data;
 using Learnify_backend.Entities;
+using Learnify_backend.Services.Email;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
+using System.Web;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -13,11 +15,15 @@ namespace Learnify_backend.Controllers
     {
         private readonly IMongoCollection<User> _users;
         private readonly JWTTokenGenerator _jwtToken;
+        private readonly IConfiguration _configuration;
+        private readonly IEmailSender _emailSender;
 
-        public UsersController(MongoDbService mongoDbService, JWTTokenGenerator jwtToken)
+        public UsersController(MongoDbService mongoDbService, JWTTokenGenerator jwtToken, IConfiguration configuration, IEmailSender emailSender)
         {
             _users = mongoDbService.Database.GetCollection<User>("users");
             _jwtToken = jwtToken;
+            _configuration = configuration;
+            _emailSender = emailSender;
         }
 
         // GET: api/<UsersController>
@@ -70,7 +76,32 @@ namespace Learnify_backend.Controllers
                 Role = "student"
             };
             await _users.InsertOneAsync(user);
+
+            var token = GenerateEmailConfirmationTokenAsync();
+            user.EmailConfirmationToken = token;
+
+            var uriBuilder = new UriBuilder(_configuration["ReturnPaths:ConfirmEmail"]);
+            var query = HttpUtility.ParseQueryString(uriBuilder.Query);
+            query["token"] = token;
+            query["userid"] = user.Id;
+            uriBuilder.Query = query.ToString();
+            var urlString = uriBuilder.ToString();
+
+            var senderEmail = _configuration["ReturnPaths:SenderEmail"];
+            await _emailSender.SendEmailAsync(senderEmail, user.Email, "Confirm Email Address",
+                "Welcome to Learnify!" + Environment.NewLine +
+                "Thanks for signing up!" + Environment.NewLine +
+                "You must follow this link to activate your account:" + Environment.NewLine +
+                urlString);
+
             return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
+        }
+
+        private string? GenerateEmailConfirmationTokenAsync()
+        {
+            const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, 64)
+                .Select(s => s[Random.Shared.Next(s.Length)]).ToArray());
         }
 
         [HttpPost("login")]
