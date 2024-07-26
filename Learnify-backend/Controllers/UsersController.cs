@@ -1,6 +1,7 @@
 ﻿using Learnify_backend.Data;
 using Learnify_backend.Entities;
 using Learnify_backend.Services.Email;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using System.Web;
@@ -28,6 +29,7 @@ namespace Learnify_backend.Controllers
 
         // GET: api/<UsersController>
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IEnumerable<User>> Get()
         {
             return await _users.Find(FilterDefinition<User>.Empty).ToListAsync();
@@ -35,19 +37,12 @@ namespace Learnify_backend.Controllers
 
         // GET api/<UsersController>/5
         [HttpGet("{id}")]
+        [Authorize]
         public ActionResult<User> GetById(string id)
         {
             var filter = Builders<User>.Filter.Eq(x => x.Id, id);
             var user = _users.Find(filter).FirstOrDefault();
             return user is not null ? Ok(user) : NotFound();
-        }
-
-        // POST api/<UsersController>
-        [HttpPost]
-        public async Task<ActionResult> CreateUser(User user)
-        {
-            await _users.InsertOneAsync(user);
-            return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
         }
 
         [HttpPost("register")]
@@ -74,7 +69,7 @@ namespace Learnify_backend.Controllers
                 LastName = request.LastName,
                 Email = request.Email,
                 Password = HashedPassword,
-                Role = "student",
+                Role = "Student",
                 EmailConfirmationToken = token,
             };
             await _users.InsertOneAsync(user);
@@ -96,7 +91,7 @@ namespace Learnify_backend.Controllers
             return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
         }
 
-        private string? GenerateEmailConfirmationTokenAsync()
+        private string GenerateEmailConfirmationTokenAsync()
         {
             const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             return new string(Enumerable.Repeat(chars, 64)
@@ -128,7 +123,6 @@ namespace Learnify_backend.Controllers
         }
 
         [HttpPost("login")]
-
         public ActionResult<LoginResponse> LoginUser([FromBody] LoginUserRequest request)
         {
             var user = _users.Find(x => x.Email == request.Email).FirstOrDefault();
@@ -146,23 +140,33 @@ namespace Learnify_backend.Controllers
 
             var loginResponse = new LoginResponse
             {
-                user = user,
-                token = token
+                User = user,
+                Token = token
             };
 
             return Ok(loginResponse);
         }
 
         // PUT api/<UsersController>
-        [HttpPut]
-        public async Task<ActionResult> UpdateUser(User user)
+        [HttpPut("setadmin/{userId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> SetAdmin(string userId)
         {
-            var filter = Builders<User>.Filter.Eq(x => x.Id, user.Id);
+            var filter = Builders<User>.Filter.Eq(x => x.Id, userId);
+            var user = await _users.Find(filter).FirstOrDefaultAsync();
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            user.Role = "Admin";
             await _users.ReplaceOneAsync(filter, user);
             return Ok();
         }
 
         [HttpPut("{userId}")]
+        [Authorize]
         public async Task<ActionResult> UpdateUserInfo(string userId, [FromBody] UpdateUserInfoRequest request)
         {
             var filter = Builders<User>.Filter.Eq(x => x.Id, userId);
@@ -200,6 +204,7 @@ namespace Learnify_backend.Controllers
 
         // DELETE api/<UsersController>/5
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<ActionResult> DeleteUser(string id)
         {
             var filter = Builders<User>.Filter.Eq(x => x.Id, id);
@@ -232,7 +237,7 @@ namespace Learnify_backend.Controllers
     }
     public class LoginResponse
     {
-        public User user { get; set; }
-        public string token { get; set; }
+        public User User { get; set; }
+        public string Token { get; set; }
     }
 }
