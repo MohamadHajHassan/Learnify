@@ -67,18 +67,17 @@ namespace Learnify_backend.Controllers
 
             var HashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
+            var token = GenerateEmailConfirmationTokenAsync();
             var user = new User
             {
                 FirstName = request.FirstName,
                 LastName = request.LastName,
                 Email = request.Email,
                 Password = HashedPassword,
-                Role = "student"
+                Role = "student",
+                EmailConfirmationToken = token,
             };
             await _users.InsertOneAsync(user);
-
-            var token = GenerateEmailConfirmationTokenAsync();
-            user.EmailConfirmationToken = token;
 
             var uriBuilder = new UriBuilder(_configuration["ReturnPaths:ConfirmEmail"]);
             var query = HttpUtility.ParseQueryString(uriBuilder.Query);
@@ -102,6 +101,30 @@ namespace Learnify_backend.Controllers
             const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             return new string(Enumerable.Repeat(chars, 64)
                 .Select(s => s[Random.Shared.Next(s.Length)]).ToArray());
+        }
+
+        [HttpPost("confirmemail")]
+        public async Task<ActionResult> ConfirmEmail(string id, string token)
+        {
+            var filter = Builders<User>.Filter.Eq(x => x.Id, id);
+            var user = _users.Find(filter).FirstOrDefault();
+            if (user == null)
+            {
+                return BadRequest();
+            }
+            else
+            {
+                if (user.EmailConfirmationToken == token)
+                {
+                    user.IsEmailConfirmed = true;
+                    await _users.ReplaceOneAsync(filter, user);
+                    return Ok();
+                }
+                else
+                {
+                    return BadRequest("Invalid email confirmation token.");
+                }
+            }
         }
 
         [HttpPost("login")]
