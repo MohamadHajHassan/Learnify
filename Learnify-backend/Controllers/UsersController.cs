@@ -251,6 +251,26 @@ namespace Learnify_backend.Controllers
 
             return Ok();
         }
+
+        [HttpGet("{userId}/profilepicture")]
+        [Authorize]
+        public async Task<IActionResult> GetProfilePhoto(string userId)
+        {
+            var user = await _users.Find(x => x.Id == userId).FirstOrDefaultAsync();
+            if (user == null || string.IsNullOrEmpty(user.ProfilePictureId))
+            {
+                return NotFound();
+            }
+
+            var downloadStream = await _gridFsBucket.OpenDownloadStreamAsync(new ObjectId(user.ProfilePictureId));
+            if (downloadStream == null)
+            {
+                return NotFound();
+            }
+
+            var contentType = downloadStream.FileInfo.Metadata.GetValue("contentType").AsString;
+            return new FileStreamResult(downloadStream, contentType);
+        }
     }
 
     public class RegisterUserRequest
