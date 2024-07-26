@@ -3,7 +3,9 @@ using Learnify_backend.Entities;
 using Learnify_backend.Services.Email;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.GridFS;
 using System.Web;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -18,13 +20,19 @@ namespace Learnify_backend.Controllers
         private readonly JWTTokenGenerator _jwtToken;
         private readonly IConfiguration _configuration;
         private readonly IEmailSender _emailSender;
+        private readonly GridFSBucket _gridFsBucket;
 
-        public UsersController(MongoDbService mongoDbService, JWTTokenGenerator jwtToken, IConfiguration configuration, IEmailSender emailSender)
+        public UsersController(
+            MongoDbService mongoDbService,
+            JWTTokenGenerator jwtToken,
+            IConfiguration configuration,
+            IEmailSender emailSender)
         {
             _users = mongoDbService.Database.GetCollection<User>("users");
             _jwtToken = jwtToken;
             _configuration = configuration;
             _emailSender = emailSender;
+            _gridFsBucket = new GridFSBucket(mongoDbService.Database);
         }
 
         // GET: api/<UsersController>
@@ -193,11 +201,6 @@ namespace Learnify_backend.Controllers
                 user.LastName = request.LastName;
             }
 
-            if (!string.IsNullOrEmpty(request.ProfilePicture))
-            {
-                user.ProfilePicture = request.ProfilePicture;
-            }
-
             if (!string.IsNullOrEmpty(request.Password))
             {
                 user.Password = BCrypt.Net.BCrypt.HashPassword(request.Password);
@@ -214,6 +217,38 @@ namespace Learnify_backend.Controllers
         {
             var filter = Builders<User>.Filter.Eq(x => x.Id, id);
             await _users.DeleteOneAsync(filter);
+            return Ok();
+        }
+
+        [HttpPut("{userId}/profilepicture")]
+        [Authorize]
+        public async Task<ActionResult> UpdateProfilePicture(string userId, IFormFile file)
+        {
+            var filter = Builders<User>.Filter.Eq(x => x.Id, userId);
+            var user = await _users.Find(filter).FirstOrDefaultAsync();
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            if (!string.IsNullOrEmpty(user.ProfilePictureId))
+            {
+                await _gridFsBucket.DeleteAsync(new ObjectId(user.ProfilePictureId));
+            }
+            var options = new GridFSUploadOptions
+            {
+                Metadata = new BsonDocument { { "contentType", file.ContentType } }
+            };
+
+            using (var stream = file.OpenReadStream())
+            {
+                var uploadResult = await _gridFsBucket.UploadFromStreamAsync($"{userId}_profile_photo", stream, options);
+                user.ProfilePictureId = uploadResult.ToString();
+            }
+
+            await _users.ReplaceOneAsync(x => x.Id == userId, user);
+
             return Ok();
         }
     }
@@ -237,7 +272,6 @@ namespace Learnify_backend.Controllers
     {
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
-        public string? ProfilePicture { get; set; }
         public string? Password { get; set; }
     }
     public class LoginResponse
