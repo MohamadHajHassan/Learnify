@@ -24,10 +24,7 @@ namespace Learnify_backend.Entities
         [BsonElement("textContent"), BsonRepresentation(BsonType.String)]
         public string? TextContent { get; set; }
 
-        [BsonElement("imagesURL"), BsonRepresentation(BsonType.String)]
-        public IEnumerable<string> ImagesURL { get; set; } = new List<string>();
-
-        [BsonElement("videoURL"), BsonRepresentation(BsonType.String)]
-        public string? VideoURL { get; set; }
+        [BsonElement("filesId"), BsonRepresentation(BsonType.String)]
+        public IEnumerable<string> FilesId { get; set; } = new List<string>();
     }
 }

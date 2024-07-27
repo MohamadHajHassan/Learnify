@@ -1,6 +1,7 @@
 ﻿using Learnify_backend.Controllers;
 using Learnify_backend.Data;
 using Learnify_backend.Entities;
+using Learnify_backend.Services.FileService;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -13,13 +14,15 @@ namespace Learnify_backend.Services.CourseService
         private readonly IMongoCollection<Module> _modules;
         private readonly IMongoCollection<Lesson> _lessons;
         private readonly IMongoCollection<Instructor> _instructors;
+        private readonly IFileService _fileService;
 
-        public CourseService(MongoDbService mongoDbService)
+        public CourseService(MongoDbService mongoDbService, IFileService fileService)
         {
             _courses = mongoDbService.Database.GetCollection<Course>("courses");
             _modules = mongoDbService.Database.GetCollection<Module>("modules");
             _lessons = mongoDbService.Database.GetCollection<Lesson>("lessons");
             _instructors = mongoDbService.Database.GetCollection<Instructor>("instructors");
+            _fileService = fileService;
         }
 
         // Course
@@ -216,6 +219,51 @@ namespace Learnify_backend.Services.CourseService
         public async Task DeleteModuleAsync(string id)
         {
             await _modules.DeleteOneAsync(module => module.Id == id);
+        }
+
+        // Lesson
+        public async Task<IEnumerable<Lesson>> GetLessonsByModuleAsync(string moduleId)
+        {
+            var filter = Builders<Lesson>.Filter.Eq(x => x.ModuleId, moduleId);
+            return await _lessons.Find(filter).ToListAsync();
+        }
+
+        public async Task<Lesson> GetLessonByIdAsync(string id)
+        {
+            return await _lessons.Find(lesson => lesson.Id == id).FirstOrDefaultAsync();
+        }
+
+        public async Task<Lesson> CreateLessonAsync(CreateLessonRequest request)
+        {
+            var lesson = new Lesson
+            {
+                Title = request.Title,
+                Ordre = request.Ordre,
+                ModuleId = request.ModuleId
+            };
+
+            if (!string.IsNullOrEmpty(request.TextContent))
+            {
+                lesson.TextContent = request.TextContent;
+            }
+
+            if (request.Files?.Any() ?? false)
+            {
+
+                lesson.FilesId = await _fileService.UploadFilesAsync(request.ModuleId, request.Files);
+            }
+            await _lessons.InsertOneAsync(lesson);
+            return lesson;
+        }
+
+        public async Task UpdateLesson(string id, Lesson lesson)
+        {
+            await _lessons.ReplaceOneAsync(lesson => lesson.Id == id, lesson);
+        }
+
+        public async Task DeleteLesson(string id)
+        {
+            await _lessons.DeleteOneAsync(lesson => lesson.Id == id);
         }
     }
 }

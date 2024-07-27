@@ -19,5 +19,12 @@ namespace Learnify_backend.Services.CourseService
         Task<Module> CreateModuleAsync(CreateModuleRequest request);
         Task<string> UpdateModuleAsync(string id, UpdateModuleRequest request);
         Task DeleteModuleAsync(string id);
+
+        // Lesson
+        Task<IEnumerable<Lesson>> GetLessonsByModuleAsync(string moduleId);
+        Task<Lesson> GetLessonByIdAsync(string id);
+        Task<Lesson> CreateLessonAsync(CreateLessonRequest request);
+        Task UpdateLesson(string id, Lesson lesson);
+        Task DeleteLesson(string id);
     }
 }

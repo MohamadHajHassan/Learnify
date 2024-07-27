@@ -1,7 +1,6 @@
-﻿using Learnify_backend.Data;
-using Learnify_backend.Entities;
+﻿using Learnify_backend.Entities;
+using Learnify_backend.Services.CourseService;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -11,43 +10,40 @@ namespace Learnify_backend.Controllers
     [ApiController]
     public class LessonsController : ControllerBase
     {
-        private readonly IMongoCollection<Lesson> _lessons;
+        private readonly ICourseService _courseService;
 
-        public LessonsController(MongoDbService mongoDbService)
+        public LessonsController(ICourseService courseService)
         {
-            _lessons = mongoDbService.Database.GetCollection<Lesson>("lessons");
+            _courseService = courseService;
         }
 
-        // GET: api/<LessonsController>
-        [HttpGet]
-        public async Task<IEnumerable<Lesson>> GetAllLessons()
+        [HttpGet("{moduleId}/lessons")]
+        public async Task<ActionResult<IEnumerable<Lesson>>> GetLessonsByModule(string moduleId)
         {
-            return await _lessons.Find(FilterDefinition<Lesson>.Empty).ToListAsync();
+            var lessons = await _courseService.GetLessonsByModuleAsync(moduleId);
+            return lessons is not null ? Ok(lessons) : NotFound();
         }
 
         // GET api/<LessonsController>/5
         [HttpGet("{id}")]
-        public ActionResult<Lesson> GetLessonById(string id)
+        public async Task<ActionResult<Lesson>> GetLessonById(string id)
         {
-            var filter = Builders<Lesson>.Filter.Eq(x => x.Id, id);
-            var lesson = _lessons.Find(filter).FirstOrDefault();
+            var lesson = await _courseService.GetLessonByIdAsync(id);
             return lesson is not null ? Ok(lesson) : NotFound();
         }
 
-        // POST api/<LessonsController>
-        [HttpPost]
-        public async Task<ActionResult> CreateLesson(Lesson lesson)
+        [HttpPost("{moduleId}/lessons")]
+        public async Task<ActionResult> CreateLesson([FromForm] CreateLessonRequest request)
         {
-            await _lessons.InsertOneAsync(lesson);
+            var lesson = await _courseService.CreateLessonAsync(request);
             return CreatedAtAction(nameof(GetLessonById), new { id = lesson.Id }, lesson);
         }
 
         // PUT api/<LessonsController>/5
-        [HttpPut]
-        public async Task<ActionResult> UpdateLesson(Lesson lesson)
+        [HttpPut("{id}")]
+        public async Task<ActionResult> UpdateLesson(string id, Lesson lesson)
         {
-            var filter = Builders<Lesson>.Filter.Eq(x => x.Id, lesson.Id);
-            await _lessons.ReplaceOneAsync(filter, lesson);
+            await _courseService.UpdateLesson(id, lesson);
             return Ok();
         }
 
@@ -55,9 +51,17 @@ namespace Learnify_backend.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteLesson(string id)
         {
-            var filter = Builders<Lesson>.Filter.Eq(x => x.Id, id);
-            await _lessons.DeleteOneAsync(filter);
+            await _courseService.DeleteLesson(id);
             return Ok();
         }
+    }
+
+    public class CreateLessonRequest
+    {
+        public required string Title { get; set; }
+        public required int Ordre { get; set; }
+        public required string ModuleId { get; set; }
+        public string? TextContent { get; set; }
+        public IFormFileCollection? Files { get; set; }
     }
 }
