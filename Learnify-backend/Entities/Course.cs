@@ -23,7 +23,7 @@ namespace Learnify_backend.Entities
 
         [BsonElement("difficultyLevel"), BsonRepresentation(BsonType.Int32)]
         [Range(1, 3, ErrorMessage = "Difficulty level must be 1(for beginner), 2(for intermediate) or 3(for advanced).")]
-        public int DifficultyLevel { get; set; }
+        public int DifficultyLevel { get; set; } = 1;
 
         [BsonElement("duration"), BsonRepresentation(BsonType.Double)]
         public double? Duration { get; set; }
@@ -50,6 +50,6 @@ namespace Learnify_backend.Entities
         public IEnumerable<string> ReviewsId { get; set; } = new List<string>();
 
         [BsonElement("averageRating"), BsonRepresentation(BsonType.Double)]
-        public double? AverageRating { get; set; }
+        public double? AverageRating { get; set; } = 5.0;
     }
 }

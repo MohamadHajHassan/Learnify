@@ -1,8 +1,8 @@
 ﻿using Learnify_backend.Data;
 using Learnify_backend.Entities;
+using Learnify_backend.Services.CourseService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
-using MongoDB.Driver;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,118 +12,66 @@ namespace Learnify_backend.Controllers
     [ApiController]
     public class CoursesController : ControllerBase
     {
-        private readonly IMongoCollection<Course> _courses;
-        private readonly IMongoCollection<Instructor> _instructors;
+        private readonly ICourseService _courseService;
 
         public CoursesController(MongoDbService mongoDbService)
         {
-            _courses = mongoDbService.Database.GetCollection<Course>("courses");
-            _instructors = mongoDbService.Database.GetCollection<Instructor>("instructors");
+            _courseService = new CourseService(mongoDbService);
         }
 
         // GET: api/<CoursesController>
         [HttpGet]
+        [Authorize]
         public async Task<IEnumerable<Course>> GetAllCourses()
         {
-            return await _courses.Find(FilterDefinition<Course>.Empty).ToListAsync();
+            return await _courseService.GetAllCoursesAsync();
         }
 
         [HttpGet("search")]
+        [Authorize]
         public async Task<IActionResult> SearchCourses([FromQuery] CourseSearchParameters searchParameters)
         {
-            var filterBuilder = Builders<Course>.Filter;
-            var filter = Builders<Course>.Filter.Empty;
-
-            if (!string.IsNullOrEmpty(searchParameters.Keyword))
-            {
-                var keywordFilter = filterBuilder.Regex(c => c.Title, new BsonRegularExpression(searchParameters.Keyword, "i"));
-                filter = filter & keywordFilter;
-            }
-
-            if (searchParameters.Categories?.Any() ?? false)
-            {
-                var categoryFilter = filterBuilder.AnyIn(c => c.Categories, searchParameters.Categories);
-                filter = filter & categoryFilter;
-            }
-
-            if (!string.IsNullOrEmpty(searchParameters.InstructorName))
-            {
-                var instFilter = Builders<Instructor>.Filter.Regex(
-                    i => i.Name,
-                    new BsonRegularExpression(searchParameters.InstructorName, "i"));
-                var instructors = await _instructors.Find(instFilter).ToListAsync();
-                var instructorIdsList = instructors.Select(i => i.Id);
-
-                var instructorFilter = filterBuilder.In(c => c.InstructorId, instructorIdsList);
-                filter = filter & instructorFilter;
-            }
-
-            if (searchParameters.DifficultyLevel.HasValue)
-            {
-                var difficultyFilter = filterBuilder.Eq(c => c.DifficultyLevel, searchParameters.DifficultyLevel.Value);
-                filter = filter & difficultyFilter;
-            }
-
-            if (searchParameters.MinDuration.HasValue)
-            {
-                var minDurationFilter = filterBuilder.Gte(c => c.Duration, searchParameters.MinDuration.Value);
-                filter = filter & minDurationFilter;
-            }
-
-            if (searchParameters.MaxDuration.HasValue)
-            {
-                var maxDurationFilter = filterBuilder.Lte(c => c.Duration, searchParameters.MaxDuration.Value);
-                filter = filter & maxDurationFilter;
-            }
-
-            if (searchParameters.MinRating.HasValue)
-            {
-                var minRatingFilter = filterBuilder.Gte(c => c.AverageRating, searchParameters.MinRating.Value);
-                filter = filter & minRatingFilter;
-            }
-
-            if (searchParameters.MaxRating.HasValue)
-            {
-                var maxRatingFilter = filterBuilder.Lte(c => c.AverageRating, searchParameters.MaxRating.Value);
-                filter = filter & maxRatingFilter;
-            }
-
-            return Ok(await _courses.Find(filter).ToListAsync());
-
+            var courses = await _courseService.SearchCoursesAsync(searchParameters);
+            return Ok(courses);
         }
 
         // GET api/<CoursesController>/5
         [HttpGet("{id}")]
-        public ActionResult<Course> GetCourseById(string id)
+        [Authorize]
+        public async Task<ActionResult<Course>> GetCourseById(string id)
         {
-            var filter = Builders<Course>.Filter.Eq(x => x.Id, id);
-            var course = _courses.Find(filter).FirstOrDefault();
+            var course = await _courseService.GetCourseByIdAsync(id);
             return course is not null ? Ok(course) : NotFound();
         }
 
         // POST api/<CoursesController>
         [HttpPost]
-        public async Task<ActionResult> CreateCourse(Course course)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> CreateCourse(CreateCourseRequest request)
         {
-            await _courses.InsertOneAsync(course);
+            var course = await _courseService.CreateCourseAsync(request);
             return CreatedAtAction(nameof(GetCourseById), new { id = course.Id }, course);
         }
 
         // PUT api/<CoursesController>/5
-        [HttpPut]
-        public async Task<ActionResult> UpdateCourse(Course course)
+        [HttpPut("{courseId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> UpdateCourse(string courseId, [FromBody] UpdateCourseRequest request)
         {
-            var filter = Builders<Course>.Filter.Eq(x => x.Id, course.Id);
-            await _courses.ReplaceOneAsync(filter, course);
+            string result = await _courseService.UpdateCourseAsync(courseId, request);
+            if (result == "Not Found")
+            {
+                return NotFound();
+            }
             return Ok();
         }
 
         // DELETE api/<CoursesController>/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteCourse(string id)
         {
-            var filter = Builders<Course>.Filter.Eq(x => x.Id, id);
-            await _courses.DeleteOneAsync(filter);
+            await _courseService.DeleteCourseAsync(id);
             return Ok();
         }
     }
@@ -138,5 +86,29 @@ namespace Learnify_backend.Controllers
         public int? MaxDuration { get; set; }
         public int? MinRating { get; set; }
         public int? MaxRating { get; set; }
+    }
+
+    public class CreateCourseRequest
+    {
+        public required string Title { get; set; }
+        public string? Description { get; set; }
+        public required List<string> Categories { get; set; }
+        public int? DifficultyLevel { get; set; }
+        public required double Duration { get; set; }
+        public required string Syllabus { get; set; }
+        public List<string>? PreRequisites { get; set; }
+        public required string InstructorId { get; set; }
+    }
+
+    public class UpdateCourseRequest
+    {
+        public string? Title { get; set; }
+        public string? Description { get; set; }
+        public List<string>? Categories { get; set; }
+        public int? DifficultyLevel { get; set; }
+        public double? Duration { get; set; }
+        public string? Syllabus { get; set; }
+        public List<string>? PreRequisites { get; set; }
+        public string? InstructorId { get; set; }
     }
 }

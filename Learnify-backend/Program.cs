@@ -1,4 +1,5 @@
 using Learnify_backend.Data;
+using Learnify_backend.Services.CourseService;
 using Learnify_backend.Services.Email;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -13,6 +14,8 @@ builder.Services.AddSingleton<MongoDbService>();
 builder.Services.AddScoped<JWTTokenGenerator>();
 
 builder.Services.AddScoped<IEmailSender, EmailSender>();
+
+builder.Services.AddScoped<ICourseService, CourseService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
