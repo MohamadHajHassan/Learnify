@@ -1,5 +1,6 @@
 ﻿using Learnify_backend.Entities;
 using Learnify_backend.Services.CourseService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -18,6 +19,7 @@ namespace Learnify_backend.Controllers
         }
 
         [HttpGet("{courseId}/modules")]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Module>>> GetModulesByCourse(string courseId)
         {
             var modules = await _courseService.GetModulesByCourseAsync(courseId);
@@ -26,21 +28,23 @@ namespace Learnify_backend.Controllers
 
         // GET api/<ModulesController>/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<Module>> GetModuleById(string id)
         {
             var module = await _courseService.GetModuleByIdAsync(id);
             return module is not null ? Ok(module) : NotFound();
         }
 
-        [HttpPost("{courseId}/module")]
+        [HttpPost("{courseId}/modules")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> CreateModule([FromBody] CreateModuleRequest request)
         {
             var module = await _courseService.CreateModuleAsync(request);
             return CreatedAtAction(nameof(GetModuleById), new { id = module.Id }, module);
         }
 
-        // PUT api/<ModulesController>/5
-        [HttpPut("{courseId}/module/{id}")]
+        [HttpPut("{courseId}/modules/{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> UpdateModule(string id, [FromBody] UpdateModuleRequest request)
         {
             var result = await _courseService.UpdateModuleAsync(id, request);
@@ -51,8 +55,8 @@ namespace Learnify_backend.Controllers
             return Ok();
         }
 
-        // DELETE api/<ModulesController>/5
-        [HttpDelete("{courseId}/module/{id}")]
+        [HttpDelete("{courseId}/modules/{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteModule(string id)
         {
             await _courseService.DeleteModuleAsync(id);
