@@ -176,5 +176,46 @@ namespace Learnify_backend.Services.CourseService
         {
             await _courses.DeleteOneAsync(course => course.Id == id);
         }
+
+        // Module
+        public async Task<IEnumerable<Module>> GetModulesByCourseAsync(string courseId)
+        {
+            var filter = Builders<Module>.Filter.Eq(x => x.CourseId, courseId);
+            return await _modules.Find(filter).ToListAsync();
+        }
+
+        public async Task<Module> GetModuleByIdAsync(string id)
+        {
+            return await _modules.Find(module => module.Id == id).FirstOrDefaultAsync();
+        }
+
+        public async Task<Module> CreateModuleAsync(CreateModuleRequest request)
+        {
+            var module = new Module
+            {
+                CourseId = request.courseId,
+                Ordre = request.Ordre
+            };
+            await _modules.InsertOneAsync(module);
+            return module;
+        }
+
+        public async Task<string> UpdateModuleAsync(string id, UpdateModuleRequest request)
+        {
+            var filter = Builders<Module>.Filter.Eq(x => x.Id, id);
+            var module = await _modules.Find(filter).FirstOrDefaultAsync();
+            if (module is null)
+            {
+                return "Not Found";
+            }
+            module.Ordre = request.Ordre;
+            await _modules.ReplaceOneAsync(filter, module);
+            return "Updated";
+        }
+
+        public async Task DeleteModuleAsync(string id)
+        {
+            await _modules.DeleteOneAsync(module => module.Id == id);
+        }
     }
 }

@@ -1,7 +1,6 @@
-﻿using Learnify_backend.Data;
-using Learnify_backend.Entities;
+﻿using Learnify_backend.Entities;
+using Learnify_backend.Services.CourseService;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -11,53 +10,63 @@ namespace Learnify_backend.Controllers
     [ApiController]
     public class ModulesController : ControllerBase
     {
-        private readonly IMongoCollection<Module> _modules;
+        private readonly ICourseService _courseService;
 
-        public ModulesController(MongoDbService mongoDbService)
+        public ModulesController(ICourseService courseService)
         {
-            _modules = mongoDbService.Database.GetCollection<Module>("modules");
+            _courseService = courseService;
         }
 
-        // GET: api/<ModulesController>
-        [HttpGet]
-        public async Task<IEnumerable<Module>> GetAllModules()
+        [HttpGet("{courseId}/modules")]
+        public async Task<ActionResult<IEnumerable<Module>>> GetModulesByCourse(string courseId)
         {
-            return await _modules.Find(FilterDefinition<Module>.Empty).ToListAsync();
+            var modules = await _courseService.GetModulesByCourseAsync(courseId);
+            return modules is not null ? Ok(modules) : NotFound();
         }
 
         // GET api/<ModulesController>/5
         [HttpGet("{id}")]
-        public ActionResult<Module> GetModuleById(string id)
+        public async Task<ActionResult<Module>> GetModuleById(string id)
         {
-            var filter = Builders<Module>.Filter.Eq(x => x.Id, id);
-            var module = _modules.Find(filter).FirstOrDefault();
+            var module = await _courseService.GetModuleByIdAsync(id);
             return module is not null ? Ok(module) : NotFound();
         }
 
-        // POST api/<ModulesController>
-        [HttpPost]
-        public async Task<ActionResult> CreateModule(Module module)
+        [HttpPost("{courseId}/module")]
+        public async Task<ActionResult> CreateModule([FromBody] CreateModuleRequest request)
         {
-            await _modules.InsertOneAsync(module);
+            var module = await _courseService.CreateModuleAsync(request);
             return CreatedAtAction(nameof(GetModuleById), new { id = module.Id }, module);
         }
 
         // PUT api/<ModulesController>/5
-        [HttpPut]
-        public async Task<ActionResult> UpdateModule(Module module)
+        [HttpPut("{courseId}/module/{id}")]
+        public async Task<ActionResult> UpdateModule(string id, [FromBody] UpdateModuleRequest request)
         {
-            var filter = Builders<Module>.Filter.Eq(x => x.Id, module.Id);
-            await _modules.ReplaceOneAsync(filter, module);
+            var result = await _courseService.UpdateModuleAsync(id, request);
+            if (result == "Not Found")
+            {
+                return NotFound();
+            }
             return Ok();
         }
 
         // DELETE api/<ModulesController>/5
-        [HttpDelete("{id}")]
+        [HttpDelete("{courseId}/module/{id}")]
         public async Task<ActionResult> DeleteModule(string id)
         {
-            var filter = Builders<Module>.Filter.Eq(x => x.Id, id);
-            await _modules.DeleteOneAsync(filter);
+            await _courseService.DeleteModuleAsync(id);
             return Ok();
         }
+    }
+    public class CreateModuleRequest
+    {
+        public required int Ordre { get; set; }
+        public required string courseId { get; set; }
+    }
+
+    public class UpdateModuleRequest
+    {
+        public required int Ordre { get; set; }
     }
 }
