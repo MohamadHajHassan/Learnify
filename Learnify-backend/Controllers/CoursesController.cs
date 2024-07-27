@@ -1,5 +1,4 @@
-﻿using Learnify_backend.Data;
-using Learnify_backend.Entities;
+﻿using Learnify_backend.Entities;
 using Learnify_backend.Services.CourseService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,9 +13,9 @@ namespace Learnify_backend.Controllers
     {
         private readonly ICourseService _courseService;
 
-        public CoursesController(MongoDbService mongoDbService)
+        public CoursesController(ICourseService courseService)
         {
-            _courseService = new CourseService(mongoDbService);
+            _courseService = courseService;
         }
 
         // GET: api/<CoursesController>
@@ -54,7 +53,7 @@ namespace Learnify_backend.Controllers
         }
 
         // PUT api/<CoursesController>/5
-        [HttpPut("{courseId}")]
+        [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> UpdateCourse(string courseId, [FromBody] UpdateCourseRequest request)
         {
