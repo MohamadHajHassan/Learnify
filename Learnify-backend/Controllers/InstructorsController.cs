@@ -1,7 +1,6 @@
-﻿using Learnify_backend.Data;
-using Learnify_backend.Entities;
+﻿using Learnify_backend.Entities;
+using Learnify_backend.Services.UserService;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -11,53 +10,60 @@ namespace Learnify_backend.Controllers
     [ApiController]
     public class InstructorsController : ControllerBase
     {
-        private readonly IMongoCollection<Instructor> _instructors;
+        private readonly IUserService _userService;
 
-        public InstructorsController(MongoDbService mongoDbService)
+        public InstructorsController(IUserService userService)
         {
-            _instructors = mongoDbService.Database.GetCollection<Instructor>("instructors");
+            _userService = userService;
         }
 
-        // GET: api/<InstructorsController>
         [HttpGet]
         public async Task<IEnumerable<Instructor>> GetAllInstructors()
         {
-            return await _instructors.Find(FilterDefinition<Instructor>.Empty).ToListAsync();
+            return await _userService.GetAllInstructorsAsync();
         }
 
-        // GET api/<InstructorsController>/5
         [HttpGet("{id}")]
-        public ActionResult<Instructor> GetInstructorById(string id)
+        public async Task<ActionResult<Instructor>> GetInstructorById(string id)
         {
-            var filter = Builders<Instructor>.Filter.Eq(x => x.Id, id);
-            var instructor = _instructors.Find(filter).FirstOrDefault();
+            var instructor = await _userService.GetInstructorByIdAsync(id);
             return instructor is not null ? Ok(instructor) : NotFound();
         }
 
-        // POST api/<InstructorsController>
         [HttpPost]
-        public async Task<ActionResult> Createinstructor(Instructor instructor)
+        public async Task<ActionResult> CreateInstructor([FromForm] CreateInstructorRequest request)
         {
-            await _instructors.InsertOneAsync(instructor);
+            var instructor = await _userService.CreateInstructorAsync(request);
             return CreatedAtAction(nameof(GetInstructorById), new { id = instructor.Id }, instructor);
         }
 
-        // PUT api/<InstructorsController>/5
-        [HttpPut]
-        public async Task<ActionResult> Updateinstructor(Instructor instructor)
+        [HttpPut("{id}")]
+        public async Task<ActionResult> UpdateInstructor(string id, [FromForm] UpdateInstructorRequest request)
         {
-            var filter = Builders<Instructor>.Filter.Eq(x => x.Id, instructor.Id);
-            await _instructors.ReplaceOneAsync(filter, instructor);
-            return Ok();
+            string result = await _userService.UpdateInstructorAsync(id, request);
+            return result == "Not Found" ? NotFound() : Ok();
         }
 
-        // DELETE api/<InstructorsController>/5
         [HttpDelete("{id}")]
-        public async Task<ActionResult> Deleteinstructor(string id)
+        public async Task<ActionResult> DeleteInstructor(string id)
         {
-            var filter = Builders<Instructor>.Filter.Eq(x => x.Id, id);
-            await _instructors.DeleteOneAsync(filter);
+            await _userService.DeleteInstructorAsync(id);
             return Ok();
         }
+    }
+
+    public class CreateInstructorRequest
+    {
+        public required string Name { get; set; }
+        public string? Bio { get; set; }
+        public string? Qualifications { get; set; }
+    }
+
+    public class UpdateInstructorRequest
+    {
+        public string? Name { get; set; }
+        public string? Bio { get; set; }
+        public string? Qualifications { get; set; }
+        public IFormFile? ProfilePicture { get; set; }
     }
 }

@@ -13,8 +13,8 @@ namespace Learnify_backend.Entities
         [BsonElement("name"), BsonRepresentation(BsonType.String)]
         public string? Name { get; set; }
 
-        [BsonElement("profilePicture"), BsonRepresentation(BsonType.String)]
-        public string? ProfilePicture { get; set; }
+        [BsonElement("profilePictureId"), BsonRepresentation(BsonType.ObjectId)]
+        public string? ProfilePictureId { get; set; }
 
         [BsonElement("bio"), BsonRepresentation(BsonType.String)]
         public string? Bio { get; set; }
