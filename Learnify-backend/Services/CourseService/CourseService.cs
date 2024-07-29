@@ -249,19 +249,45 @@ namespace Learnify_backend.Services.CourseService
 
             if (request.Files?.Any() ?? false)
             {
-
                 lesson.FilesId = await _fileService.UploadFilesAsync(request.ModuleId, request.Files);
             }
             await _lessons.InsertOneAsync(lesson);
             return lesson;
         }
 
-        public async Task UpdateLesson(string id, Lesson lesson)
+        public async Task<string> UpdateLessonAsync(string id, UpdateLessonRequest request)
         {
-            await _lessons.ReplaceOneAsync(lesson => lesson.Id == id, lesson);
+            var filter = Builders<Lesson>.Filter.Eq(x => x.Id, id);
+            var lesson = await _lessons.Find(filter).FirstOrDefaultAsync();
+            if (lesson is null)
+            {
+                return "Not Found";
+            }
+            if (!string.IsNullOrEmpty(request.Title))
+            {
+                lesson.Title = request.Title;
+            }
+            if (request.Ordre.HasValue)
+            {
+                lesson.Ordre = request.Ordre.Value;
+            }
+            if (!string.IsNullOrEmpty(request.TextContent))
+            {
+                lesson.TextContent = request.TextContent;
+            }
+            if (request.Files?.Any() ?? false)
+            {
+                if (lesson.FilesId?.Any() ?? false)
+                {
+                    await _fileService.DeleteFilesAsync(lesson.FilesId);
+                }
+                lesson.FilesId = await _fileService.UploadFilesAsync(lesson.ModuleId, request.Files);
+            }
+            await _lessons.ReplaceOneAsync(filter, lesson);
+            return "Updated";
         }
 
-        public async Task DeleteLesson(string id)
+        public async Task DeleteLessonAsync(string id)
         {
             await _lessons.DeleteOneAsync(lesson => lesson.Id == id);
         }

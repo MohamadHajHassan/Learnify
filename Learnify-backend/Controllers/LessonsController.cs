@@ -39,11 +39,14 @@ namespace Learnify_backend.Controllers
             return CreatedAtAction(nameof(GetLessonById), new { id = lesson.Id }, lesson);
         }
 
-        // PUT api/<LessonsController>/5
-        [HttpPut("{id}")]
-        public async Task<ActionResult> UpdateLesson(string id, Lesson lesson)
+        [HttpPut("{moduleId}/lessons/{id}")]
+        public async Task<ActionResult> UpdateLesson(string id, [FromForm] UpdateLessonRequest request)
         {
-            await _courseService.UpdateLesson(id, lesson);
+            var result = await _courseService.UpdateLessonAsync(id, request);
+            if (result == "Not Found")
+            {
+                return NotFound();
+            }
             return Ok();
         }
 
@@ -51,7 +54,7 @@ namespace Learnify_backend.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteLesson(string id)
         {
-            await _courseService.DeleteLesson(id);
+            await _courseService.DeleteLessonAsync(id);
             return Ok();
         }
     }
@@ -61,6 +64,14 @@ namespace Learnify_backend.Controllers
         public required string Title { get; set; }
         public required int Ordre { get; set; }
         public required string ModuleId { get; set; }
+        public string? TextContent { get; set; }
+        public IFormFileCollection? Files { get; set; }
+    }
+
+    public class UpdateLessonRequest
+    {
+        public string? Title { get; set; }
+        public int? Ordre { get; set; }
         public string? TextContent { get; set; }
         public IFormFileCollection? Files { get; set; }
     }
