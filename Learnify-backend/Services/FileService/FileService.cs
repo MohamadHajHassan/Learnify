@@ -47,9 +47,12 @@ namespace Learnify_backend.Services.FileService
             return new FileStreamResult(downloadStream, contentType);
         }
 
-        public async Task DeleteFileAsync(string fileId)
+        public async Task DeleteFilesAsync(IEnumerable<string> filesId)
         {
-            await _gridFSBucket.DeleteAsync(new ObjectId(fileId));
+            foreach (var fileId in filesId)
+            {
+                await _gridFSBucket.DeleteAsync(new ObjectId(fileId));
+            }
         }
     }
 }

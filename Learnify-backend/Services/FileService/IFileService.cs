@@ -6,6 +6,6 @@ namespace Learnify_backend.Services.FileService
     {
         Task<List<string>> UploadFilesAsync(string Id, IFormFileCollection files);
         Task<IActionResult> DownloadFileAsync(string fileId);
-        Task DeleteFileAsync(string fileId);
+        Task DeleteFilesAsync(IEnumerable<string> filesId);
     }
 }
