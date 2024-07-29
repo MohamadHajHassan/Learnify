@@ -32,5 +32,12 @@ namespace Learnify_backend.Services.CourseService
         Task<Quiz> GetQuizByIdAsync(string id);
         Task<Quiz> CreateQuizAsync(CreateQuizRequest request);
         Task DeleteQuizAsync(string id);
+
+        // Question
+        Task<IEnumerable<Question>> GetQuestionsByQuizAsync(string quizId);
+        Task<Question> GetQuestionByIdAsync(string id);
+        Task<Question> CreateQuestionAsync(CreateQuestionRequest request);
+        Task<string> UpdateQuestionAsync(string id, UpdateQuestionRequest request);
+        Task DeleteQuestionAsync(string id);
     }
 }

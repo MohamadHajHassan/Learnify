@@ -14,6 +14,7 @@ namespace Learnify_backend.Services.CourseService
         private readonly IMongoCollection<Module> _modules;
         private readonly IMongoCollection<Lesson> _lessons;
         private readonly IMongoCollection<Quiz> _quizzes;
+        private readonly IMongoCollection<Question> _questions;
         private readonly IMongoCollection<Instructor> _instructors;
         private readonly IFileService _fileService;
 
@@ -23,6 +24,7 @@ namespace Learnify_backend.Services.CourseService
             _modules = mongoDbService.Database.GetCollection<Module>("modules");
             _lessons = mongoDbService.Database.GetCollection<Lesson>("lessons");
             _quizzes = mongoDbService.Database.GetCollection<Quiz>("quizzes");
+            _questions = mongoDbService.Database.GetCollection<Question>("questions");
             _instructors = mongoDbService.Database.GetCollection<Instructor>("instructors");
             _fileService = fileService;
 
@@ -300,6 +302,7 @@ namespace Learnify_backend.Services.CourseService
         {
             return await _quizzes.Find(quiz => quiz.ModuleId == moduleId).FirstOrDefaultAsync();
         }
+
         public async Task<Quiz> GetQuizByIdAsync(string id)
         {
             return await _quizzes.Find(quiz => quiz.Id == id).FirstOrDefaultAsync();
@@ -318,6 +321,60 @@ namespace Learnify_backend.Services.CourseService
         public async Task DeleteQuizAsync(string id)
         {
             await _quizzes.DeleteOneAsync(quiz => quiz.Id == id);
+        }
+
+        // Question
+        public async Task<IEnumerable<Question>> GetQuestionsByQuizAsync(string quizId)
+        {
+            var filter = Builders<Question>.Filter.Eq(x => x.QuizId, quizId);
+            return await _questions.Find(filter).ToListAsync();
+        }
+
+        public async Task<Question> GetQuestionByIdAsync(string id)
+        {
+            return await _questions.Find(question => question.Id == id).FirstOrDefaultAsync();
+        }
+
+        public async Task<Question> CreateQuestionAsync(CreateQuestionRequest request)
+        {
+            var question = new Question
+            {
+                QuizId = request.QuizId,
+                QuestionText = request.QuestionText,
+                Options = request.Options,
+                CorrectAnswer = request.CorrectAnswer
+            };
+            await _questions.InsertOneAsync(question);
+            return question;
+        }
+
+        public async Task<string> UpdateQuestionAsync(string id, UpdateQuestionRequest request)
+        {
+            var filter = Builders<Question>.Filter.Eq(x => x.Id, id);
+            var question = await _questions.Find(filter).FirstOrDefaultAsync();
+            if (question is null)
+            {
+                return "Not Found";
+            }
+            if (!string.IsNullOrEmpty(request.QuestionText))
+            {
+                question.QuestionText = request.QuestionText;
+            }
+            if (request.Options?.Any() ?? false)
+            {
+                question.Options = request.Options;
+            }
+            if (!string.IsNullOrEmpty(request.CorrectAnswer))
+            {
+                question.CorrectAnswer = request.CorrectAnswer;
+            }
+            await _questions.ReplaceOneAsync(filter, question);
+            return "Updated";
+        }
+
+        public async Task DeleteQuestionAsync(string id)
+        {
+            await _questions.DeleteOneAsync(question => question.Id == id);
         }
     }
 }

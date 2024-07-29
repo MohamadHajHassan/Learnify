@@ -1,7 +1,6 @@
-﻿using Learnify_backend.Data;
-using Learnify_backend.Entities;
+﻿using Learnify_backend.Entities;
+using Learnify_backend.Services.CourseService;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -11,43 +10,43 @@ namespace Learnify_backend.Controllers
     [ApiController]
     public class QuestionsController : ControllerBase
     {
-        private readonly IMongoCollection<Question> _questions;
+        private readonly ICourseService _courseService;
 
-        public QuestionsController(MongoDbService mongoDbService)
+        public QuestionsController(ICourseService courseService)
         {
-            _questions = mongoDbService.Database.GetCollection<Question>("questions");
+            _courseService = courseService;
         }
 
-        // GET: api/<QuestionsController>
-        [HttpGet]
-        public async Task<IEnumerable<Question>> GetAllQuestions()
+        [HttpGet("{quizId}/questions")]
+        public async Task<ActionResult<IEnumerable<Question>>> GetQuestionsByQuiz(string quizId)
         {
-            return await _questions.Find(FilterDefinition<Question>.Empty).ToListAsync();
+            var questions = await _courseService.GetQuestionsByQuizAsync(quizId);
+            return questions is not null ? Ok(questions) : NotFound();
         }
 
         // GET api/<QuestionsController>/5
         [HttpGet("{id}")]
-        public ActionResult<Question> GetQuestionById(string id)
+        public async Task<ActionResult<Question>> GetQuestionById(string id)
         {
-            var filter = Builders<Question>.Filter.Eq(x => x.Id, id);
-            var question = _questions.Find(filter).FirstOrDefault();
+            var question = await _courseService.GetQuestionByIdAsync(id);
             return question is not null ? Ok(question) : NotFound();
         }
 
-        // POST api/<QuestionsController>
-        [HttpPost]
-        public async Task<ActionResult> CreateQuestion(Question question)
+        [HttpPost("{quizId}/questions")]
+        public async Task<ActionResult> CreateQuestion([FromForm] CreateQuestionRequest request)
         {
-            await _questions.InsertOneAsync(question);
+            var question = await _courseService.CreateQuestionAsync(request);
             return CreatedAtAction(nameof(GetQuestionById), new { id = question.Id }, question);
         }
 
-        // PUT api/<QuestionsController>/5
-        [HttpPut]
-        public async Task<ActionResult> UpdateQuestion(Question question)
+        [HttpPut("{quizId}/questions/{id}")]
+        public async Task<ActionResult> UpdateQuestion(string id, [FromForm] UpdateQuestionRequest request)
         {
-            var filter = Builders<Question>.Filter.Eq(x => x.Id, question.Id);
-            await _questions.ReplaceOneAsync(filter, question);
+            var result = await _courseService.UpdateQuestionAsync(id, request);
+            if (result == "Not Found")
+            {
+                return NotFound();
+            }
             return Ok();
         }
 
@@ -55,9 +54,23 @@ namespace Learnify_backend.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteQuestion(string id)
         {
-            var filter = Builders<Question>.Filter.Eq(x => x.Id, id);
-            await _questions.DeleteOneAsync(filter);
+            await _courseService.DeleteQuestionAsync(id);
             return Ok();
         }
+    }
+
+    public class CreateQuestionRequest
+    {
+        public required string QuizId { get; set; }
+        public required string QuestionText { get; set; }
+        public required IEnumerable<string> Options { get; set; }
+        public required string CorrectAnswer { get; set; }
+    }
+
+    public class UpdateQuestionRequest
+    {
+        public string? QuestionText { get; set; }
+        public IEnumerable<string>? Options { get; set; }
+        public string? CorrectAnswer { get; set; }
     }
 }
