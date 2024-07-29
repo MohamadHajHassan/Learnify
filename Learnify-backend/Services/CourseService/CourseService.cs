@@ -13,6 +13,7 @@ namespace Learnify_backend.Services.CourseService
         private readonly IMongoCollection<Course> _courses;
         private readonly IMongoCollection<Module> _modules;
         private readonly IMongoCollection<Lesson> _lessons;
+        private readonly IMongoCollection<Quiz> _quizzes;
         private readonly IMongoCollection<Instructor> _instructors;
         private readonly IFileService _fileService;
 
@@ -21,8 +22,10 @@ namespace Learnify_backend.Services.CourseService
             _courses = mongoDbService.Database.GetCollection<Course>("courses");
             _modules = mongoDbService.Database.GetCollection<Module>("modules");
             _lessons = mongoDbService.Database.GetCollection<Lesson>("lessons");
+            _quizzes = mongoDbService.Database.GetCollection<Quiz>("quizzes");
             _instructors = mongoDbService.Database.GetCollection<Instructor>("instructors");
             _fileService = fileService;
+
         }
 
         // Course
@@ -290,6 +293,31 @@ namespace Learnify_backend.Services.CourseService
         public async Task DeleteLessonAsync(string id)
         {
             await _lessons.DeleteOneAsync(lesson => lesson.Id == id);
+        }
+
+        // Quiz
+        public async Task<Quiz> GetQuizByModuleAsync(string moduleId)
+        {
+            return await _quizzes.Find(quiz => quiz.ModuleId == moduleId).FirstOrDefaultAsync();
+        }
+        public async Task<Quiz> GetQuizByIdAsync(string id)
+        {
+            return await _quizzes.Find(quiz => quiz.Id == id).FirstOrDefaultAsync();
+        }
+
+        public async Task<Quiz> CreateQuizAsync(CreateQuizRequest request)
+        {
+            var quiz = new Quiz
+            {
+                ModuleId = request.ModuleId
+            };
+            await _quizzes.InsertOneAsync(quiz);
+            return quiz;
+        }
+
+        public async Task DeleteQuizAsync(string id)
+        {
+            await _quizzes.DeleteOneAsync(quiz => quiz.Id == id);
         }
     }
 }

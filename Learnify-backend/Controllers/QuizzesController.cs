@@ -1,7 +1,6 @@
-﻿using Learnify_backend.Data;
-using Learnify_backend.Entities;
+﻿using Learnify_backend.Entities;
+using Learnify_backend.Services.CourseService;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -11,53 +10,47 @@ namespace Learnify_backend.Controllers
     [ApiController]
     public class QuizzesController : ControllerBase
     {
-        private readonly IMongoCollection<Quiz> _quizzes;
+        private readonly ICourseService _courseService;
 
-        public QuizzesController(MongoDbService mongoDbService)
+        public QuizzesController(ICourseService courseService)
         {
-            _quizzes = mongoDbService.Database.GetCollection<Quiz>("quizzes");
+            _courseService = courseService;
         }
 
-        // GET: api/<QuizzesController>
-        [HttpGet]
-        public async Task<IEnumerable<Quiz>> GetAllQuizzes()
+        [HttpGet("{moduleId}/quiz")]
+        public async Task<ActionResult<Quiz>> GetQuizByModule(string moduleId)
         {
-            return await _quizzes.Find(FilterDefinition<Quiz>.Empty).ToListAsync();
+            var quiz = await _courseService.GetQuizByModuleAsync(moduleId);
+            return quiz is not null ? Ok(quiz) : NotFound();
         }
 
         // GET api/<QuizzesController>/5
         [HttpGet("{id}")]
-        public ActionResult<Quiz> GetQuizById(string id)
+        public async Task<ActionResult<Quiz>> GetQuizById(string id)
         {
-            var filter = Builders<Quiz>.Filter.Eq(x => x.Id, id);
-            var quiz = _quizzes.Find(filter).FirstOrDefault();
+            var quiz = await _courseService.GetQuizByIdAsync(id);
             return quiz is not null ? Ok(quiz) : NotFound();
         }
 
         // POST api/<QuizzesController>
-        [HttpPost]
-        public async Task<ActionResult> CreateQuiz(Quiz quiz)
+        [HttpPost("{moduleId}/quiz")]
+        public async Task<ActionResult> CreateQuiz([FromForm] CreateQuizRequest request)
         {
-            await _quizzes.InsertOneAsync(quiz);
+            var quiz = await _courseService.CreateQuizAsync(request);
             return CreatedAtAction(nameof(GetQuizById), new { id = quiz.Id }, quiz);
-        }
-
-        // PUT api/<QuizzesController>/5
-        [HttpPut]
-        public async Task<ActionResult> UpdateQuiz(Quiz quiz)
-        {
-            var filter = Builders<Quiz>.Filter.Eq(x => x.Id, quiz.Id);
-            await _quizzes.ReplaceOneAsync(filter, quiz);
-            return Ok();
         }
 
         // DELETE api/<QuizzesController>/5
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteQuiz(string id)
         {
-            var filter = Builders<Quiz>.Filter.Eq(x => x.Id, id);
-            await _quizzes.DeleteOneAsync(filter);
+            await _courseService.DeleteQuizAsync(id);
             return Ok();
         }
+    }
+
+    public class CreateQuizRequest
+    {
+        public required string ModuleId { get; set; }
     }
 }
