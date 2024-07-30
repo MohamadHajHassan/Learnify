@@ -1,6 +1,7 @@
 using Learnify_backend.Data;
 using Learnify_backend.Services.CourseService;
 using Learnify_backend.Services.Email;
+using Learnify_backend.Services.EnrollmentService;
 using Learnify_backend.Services.FileService;
 using Learnify_backend.Services.UserService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -20,6 +21,8 @@ builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 
 builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 
 builder.Services.AddScoped<IFileService, FileService>();
 
