@@ -22,12 +22,48 @@ namespace Learnify_backend.Entities
         public DateTime EnrolledOn { get; set; } = DateTime.UtcNow;
 
         [BsonElement("progress"), BsonRepresentation(BsonType.Double)]
-        public double Progress { get; set; } = 0;
+        public double Progress { get; set; } = 0.0;
 
         [BsonElement("completedModulesId"), BsonRepresentation(BsonType.String)]
         public IEnumerable<string> CompletedModulesId { get; set; } = new List<string>();
 
+        [BsonElement("courceCompletedQuizzesId"), BsonRepresentation(BsonType.String)]
+        public IEnumerable<string> CourseCompletedQuizzesId { get; set; } = new List<string>();
+
         [BsonElement("gradesId"), BsonRepresentation(BsonType.String)]
         public IEnumerable<string> GradesId { get; set; } = new List<string>();
+
+        [BsonElement("finalGrade"), BsonRepresentation(BsonType.Double)]
+        public double? FinalGrade { get; set; }
+
+        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
+        [BsonElement("finishedOn"), BsonRepresentation(BsonType.DateTime)]
+        public DateTime? FinishedOn { get; set; }
+
+        [BsonElement("isCompleted"), BsonRepresentation(BsonType.Boolean)]
+        public bool IsCompleted { get; set; } = false;
+
+        [BsonElement("isDropped"), BsonRepresentation(BsonType.Boolean)]
+        public bool IsDropped { get; set; } = false;
+
+        [BsonElement("modulesProgress"), BsonRepresentation(BsonType.Document)]
+        public Dictionary<string, ModuleProgress> ModuleProgress { get; set; } = new Dictionary<string, ModuleProgress>();
+    }
+    public class ModuleProgress
+    {
+        [BsonElement("moduleId"), BsonRepresentation(BsonType.ObjectId)]
+        public required string ModuleId { get; set; }
+
+        [BsonElement("moduleCompletedLessonsId"), BsonRepresentation(BsonType.String)]
+        public IEnumerable<string> ModuleCompletedLessonsId { get; set; } = new List<string>();
+
+        [BsonElement("moduleCompletedQuizId"), BsonRepresentation(BsonType.ObjectId)]
+        public string? ModuleCompletedQuizId { get; set; }
+
+        [BsonElement("moduleGrade"), BsonRepresentation(BsonType.Double)]
+        public double? ModuleGrade { get; set; }
+
+        [BsonElement("isCompleted"), BsonRepresentation(BsonType.Boolean)]
+        public bool IsCompleted { get; set; } = false;
     }
 }
