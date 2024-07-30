@@ -1,7 +1,6 @@
-﻿using Learnify_backend.Data;
-using Learnify_backend.Entities;
+﻿using Learnify_backend.Entities;
+using Learnify_backend.Services.EnrollmentService;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -11,78 +10,67 @@ namespace Learnify_backend.Controllers
     [ApiController]
     public class EnrollmentsController : ControllerBase
     {
-        private readonly IMongoCollection<Enrollment> _enrollments;
+        private readonly IEnrollmentService _enrollmentService;
 
-        public EnrollmentsController(MongoDbService mongoDbService)
+        public EnrollmentsController(IEnrollmentService enrollmentService)
         {
-            _enrollments = mongoDbService.Database.GetCollection<Enrollment>("enrollments");
+            _enrollmentService = enrollmentService;
+        }
+
+        // GET: api/<EnrollmentsController>
+        [HttpGet("userId/{userId}")]
+        public async Task<ActionResult<IEnumerable<Enrollment>>> GetEnrollmentsByUserId(string userId)
+        {
+            var enrollments = await _enrollmentService.GetEnrollmentsByUserIdAsync(userId);
+            return enrollments is not null ? Ok(enrollments) : NotFound();
+        }
+
+        [HttpGet("courseId/{courseId}")]
+        public async Task<ActionResult<IEnumerable<Enrollment>>> GetEnrollmentsByCourseId(string courseId)
+        {
+            var enrollments = await _enrollmentService.GetEnrollmentsByCourseIdAsync(courseId);
+            return enrollments is not null ? Ok(enrollments) : NotFound();
         }
 
         // GET api/<EnrollmentsController>/5
         [HttpGet("{id}")]
-        public ActionResult<Enrollment> GetEnrollmentById(string id)
+        public async Task<ActionResult<Enrollment>> GetEnrollmentById(string id)
         {
-            var filter = Builders<Enrollment>.Filter.Eq(x => x.Id, id);
-            var enrollment = _enrollments.Find(filter).FirstOrDefault();
+            var enrollment = await _enrollmentService.GetEnrollmentByIdAsync(id);
             return enrollment is not null ? Ok(enrollment) : NotFound();
         }
 
-        [HttpGet("{userId}/enrollments")]
-        public async Task<ActionResult<IEnumerable<Enrollment>>> GetEnrollmentsByUser(string userId)
+        [HttpPost]
+        public async Task<ActionResult<Enrollment>> CreateEnrollment([FromForm] CreateEnrollmentRequest request)
         {
-            var filter = Builders<Enrollment>.Filter.Eq(x => x.UserId, userId);
-            var enrollments = await _enrollments.Find(filter).ToListAsync();
-            return enrollments is not null ? Ok(enrollments) : NotFound();
-        }
-
-        [HttpPost("{userId}/courses/{courseId}")]
-        public async Task<ActionResult> EnrollUserToCourse(string userId, string courseId)
-        {
-            var enrollment = new Enrollment
-            {
-                UserId = userId,
-                CourseId = courseId
-            };
-            await _enrollments.InsertOneAsync(enrollment);
+            var enrollment = await _enrollmentService.CreateEnrollmentAsync(request);
             return CreatedAtAction(nameof(GetEnrollmentById), new { id = enrollment.Id }, enrollment);
         }
 
-        [HttpPut("{enrollmentId}/progress")]
-        public async Task<IActionResult> UpdateEnrollmentProgress(string enrollmentId, [FromBody] double progress)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateEnrollment(string id, [FromForm] UpdateEnrollmentRequest request)
         {
-            var filter = Builders<Enrollment>.Filter.Eq(e => e.Id, enrollmentId);
-            var update = Builders<Enrollment>.Update.Set(e => e.Progress, progress);
-            await _enrollments.UpdateOneAsync(filter, update);
-            return Ok();
+            var result = await _enrollmentService.UpdateEnrollmentAsync(id, request);
+            return result == "Not Found" ? NotFound() : Ok();
         }
 
-        [HttpPut("{enrollmentId}/modules/{moduleId}")]
-        public async Task<IActionResult> CompleteModule(string enrollmentId, string moduleId)
+        [HttpPut("/dropCourse/{id}")]
+        public async Task<IActionResult> DropCourse(string id)
         {
-            var filter = Builders<Enrollment>.Filter.Eq(e => e.Id, enrollmentId);
-            var update = Builders<Enrollment>.Update.AddToSet(e => e.CompletedModulesId, moduleId);
-            await _enrollments.UpdateOneAsync(filter, update);
+            await _enrollmentService.DropCourseAsync(id);
             return Ok();
         }
+    }
 
-        [HttpPut("{enrollmentId}/grades")]
-        public async Task<IActionResult> AddGrade(string enrollmentId, [FromBody] string gradeId)
-        {
-            var filter = Builders<Enrollment>.Filter.Eq(e => e.Id, enrollmentId);
-            var update = Builders<Enrollment>.Update.AddToSet(e => e.GradesId, gradeId);
-            await _enrollments.UpdateOneAsync(filter, update);
-            return Ok();
-        }
-
-        [HttpDelete("{userId}/courses/{courseId}")]
-        public async Task<IActionResult> DropCourse(string userId, string courseId)
-        {
-            var filter = Builders<Enrollment>.Filter.And(
-                Builders<Enrollment>.Filter.Eq(e => e.UserId, userId),
-                Builders<Enrollment>.Filter.Eq(e => e.CourseId, courseId)
-            );
-            await _enrollments.DeleteOneAsync(filter);
-            return Ok();
-        }
+    public class CreateEnrollmentRequest
+    {
+        public required string UserId { get; set; }
+        public required string CourseId { get; set; }
+    }
+    public class UpdateEnrollmentRequest
+    {
+        public required string ModuleId { get; set; }
+        public string? LessonCompletedId { get; set; }
+        public string? QuizCompletedId { get; set; }
     }
 }
