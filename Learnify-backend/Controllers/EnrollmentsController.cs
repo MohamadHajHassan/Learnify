@@ -72,5 +72,6 @@ namespace Learnify_backend.Controllers
         public required string ModuleId { get; set; }
         public string? LessonCompletedId { get; set; }
         public string? QuizCompletedId { get; set; }
+        public string? GradeId { get; set; }
     }
 }

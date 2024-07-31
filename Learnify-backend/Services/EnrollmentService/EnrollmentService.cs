@@ -8,6 +8,9 @@ namespace Learnify_backend.Services.EnrollmentService
     public class EnrollmentService : IEnrollmentService
     {
         private readonly IMongoCollection<Enrollment> _enrollments;
+        private readonly IMongoCollection<Grade> _grades;
+        private readonly IMongoCollection<Question> _questions;
+        private readonly IMongoCollection<Quiz> _quizzes;
         private readonly ICourseService _courseService;
 
         public EnrollmentService(MongoDbService mongoDbService, ICourseService courseService)
@@ -19,6 +22,7 @@ namespace Learnify_backend.Services.EnrollmentService
             _courseService = courseService;
         }
 
+        // Enrollment
         public async Task<IEnumerable<Enrollment>> GetEnrollmentsByUserIdAsync(string userId)
         {
             var filter = Builders<Enrollment>.Filter.Eq(x => x.UserId, userId)
@@ -85,9 +89,21 @@ namespace Learnify_backend.Services.EnrollmentService
             {
                 updateDefinition = Builders<Enrollment>.Update
                     .AddToSet(e => e.CourseCompletedQuizzesId, request.QuizCompletedId)
+                    .AddToSet(e => e.CompletedModulesId, request.ModuleId)
                     .Set(e => e.ModuleProgress[request.ModuleId].ModuleCompletedQuizId, request.QuizCompletedId)
                     .Set(e => e.ModuleProgress[request.ModuleId].IsCompleted, true)
                     .Set(e => e.Progress, await CalculateProgressAsync(enrollment.CourseId, enrollment.ModuleProgress));
+
+                await _enrollments.UpdateOneAsync(filter, updateDefinition);
+            }
+            if (!String.IsNullOrEmpty(request.GradeId))
+            {
+                var gradeFilter = Builders<Grade>.Filter.Eq(x => x.Id, request.GradeId);
+                var grade = await _grades.Find(gradeFilter).FirstOrDefaultAsync();
+
+                updateDefinition = Builders<Enrollment>.Update
+                    .AddToSet(e => e.GradesId, request.GradeId)
+                    .Set(e => e.ModuleProgress[request.ModuleId].ModuleGrade, grade.HighestScore);
 
                 await _enrollments.UpdateOneAsync(filter, updateDefinition);
             }
