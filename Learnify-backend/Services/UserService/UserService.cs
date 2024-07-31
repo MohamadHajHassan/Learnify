@@ -1,20 +1,225 @@
 ﻿using Learnify_backend.Controllers;
 using Learnify_backend.Data;
 using Learnify_backend.Entities;
+using Learnify_backend.Services.Email;
 using Learnify_backend.Services.FileService;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
+using System.Web;
 
 namespace Learnify_backend.Services.UserService
 {
     public class UserService : IUserService
     {
+        private readonly IMongoCollection<User> _users;
+        private readonly IConfiguration _configuration;
+        private readonly IEmailSender _emailSender;
         private readonly IMongoCollection<Instructor> _instructors;
         private readonly IFileService _fileService;
 
-        public UserService(MongoDbService mongoDbService, IFileService fileService)
+        public UserService(
+            IConfiguration configuration,
+            IEmailSender emailSender,
+            IFileService fileService,
+            MongoDbService mongoDbService)
         {
+            _users = mongoDbService.Database.GetCollection<User>("users");
+            _configuration = configuration;
+            _emailSender = emailSender;
             _instructors = mongoDbService.Database.GetCollection<Instructor>("instructors");
             _fileService = fileService;
+        }
+
+        public async Task<IEnumerable<User>> GetAllUsersAsync()
+        {
+            return await _users.Find(FilterDefinition<User>.Empty).ToListAsync();
+        }
+
+        public async Task<User> GetUserByIdAsync(string id)
+        {
+            var filter = Builders<User>.Filter.Eq(x => x.Id, id);
+            return await _users.Find(filter).FirstOrDefaultAsync();
+        }
+
+        public async Task<User> GetUserByEmailAsync(string email)
+        {
+            var filter = Builders<User>.Filter.Eq(x => x.Email, email);
+            return await _users.Find(filter).FirstOrDefaultAsync();
+        }
+
+        private string GenerateEmailConfirmationToken()
+        {
+            const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, 64)
+                .Select(s => s[Random.Shared.Next(s.Length)]).ToArray());
+        }
+
+        public async Task GenerateAndSendConfirmationEmailAsync(string token, User user)
+        {
+            var confirmationUrl = BuildConfirmationUrl(token, user.Id);
+
+            var emailBody = BuildConfirmationEmailBody(user.Email, confirmationUrl);
+
+            await _emailSender.SendEmailAsync(
+                _configuration["ReturnPaths:SenderEmail"],
+                user.Email,
+                "Confirm Email Address",
+                emailBody);
+        }
+
+        private string BuildConfirmationUrl(string token, string userId)
+        {
+            var uriBuilder = new UriBuilder(_configuration["ReturnPaths:ConfirmEmail"]);
+            var query = HttpUtility.ParseQueryString(uriBuilder.Query);
+            query["token"] = token;
+            query["userid"] = userId;
+            uriBuilder.Query = query.ToString();
+            return uriBuilder.ToString();
+
+        }
+
+        private string BuildConfirmationEmailBody(string userEmail, string confirmationUrl)
+        {
+            return $"Welcome to Learnify!" + Environment.NewLine +
+                   $"Thanks for signing up!" + Environment.NewLine +
+                   $"You must follow this link to activate your account:" + Environment.NewLine +
+                   confirmationUrl;
+        }
+
+        public async Task<string> RegisterUserAsync(RegisterUserRequest request)
+        {
+            var existingUser = GetUserByEmailAsync(request.Email);
+            if (existingUser != null)
+            {
+                return "User with this email already exists!";
+            }
+
+            if (request.Password != request.ConfirmPassword)
+            {
+                return "Passwords do not match!";
+            }
+            var token = GenerateEmailConfirmationToken();
+
+            var user = new User
+            {
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                Email = request.Email,
+                Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                Role = "Student",
+                EmailConfirmationToken = token
+            };
+
+            await _users.InsertOneAsync(user);
+            user = await GetUserByEmailAsync(request.Email);
+            await GenerateAndSendConfirmationEmailAsync(token, user);
+            return "Registered";
+        }
+
+        public async Task<string> ConfirmEmailAsync(string id, string token)
+        {
+            var filter = Builders<User>.Filter.Eq(x => x.Id, id);
+            var user = _users.Find(filter).FirstOrDefault();
+            if (user == null)
+            {
+                return "Not Found";
+            }
+            else
+            {
+                if (user.EmailConfirmationToken == token)
+                {
+                    user.IsEmailConfirmed = true;
+                    await _users.ReplaceOneAsync(filter, user);
+                    return "Email is confirmed";
+                }
+                else
+                {
+                    return "Invalid email confirmation token.";
+                }
+            }
+        }
+
+        public async Task<string> LoginUserAsync(LoginUserRequest request)
+        {
+            var user = await GetUserByEmailAsync(request.Email);
+            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
+            {
+                return "Invalid Credentials!";
+            }
+
+            if (!user.IsEmailConfirmed)
+            {
+                return "Please confirm your email address to login.";
+            }
+
+            return "OK";
+        }
+
+        public async Task<string> SetAdminAsync(string id)
+        {
+            var filter = Builders<User>.Filter.Eq(x => x.Id, id);
+            var user = await _users.Find(filter).FirstOrDefaultAsync();
+
+            if (user == null)
+            {
+                return "Not Found";
+            }
+
+            user.Role = "Admin";
+            await _users.ReplaceOneAsync(filter, user);
+            return "Updated";
+        }
+
+        public async Task<string> UpdateUserAsync(string id, UpdateUserRequest request)
+        {
+            var filter = Builders<User>.Filter.Eq(x => x.Id, id);
+            var user = await _users.Find(filter).FirstOrDefaultAsync();
+            if (user == null)
+            {
+                return "Not Found";
+            }
+            if (!String.IsNullOrEmpty(request.FirstName))
+            {
+                user.FirstName = request.FirstName;
+            }
+            if (!String.IsNullOrEmpty(request.LastName))
+            {
+                user.LastName = request.LastName;
+            }
+            if (!String.IsNullOrEmpty(request.Password))
+            {
+                user.Password = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            }
+            if (request.ProfilePicture is not null)
+            {
+                if (!String.IsNullOrEmpty(user.ProfilePictureId))
+                {
+                    await _fileService.DeleteFilesAsync(new List<string> { user.ProfilePictureId });
+                }
+                var files = new FormFileCollection();
+                files.Add(request.ProfilePicture);
+
+                var ProfilePictureList = await _fileService.UploadFilesAsync(id, files);
+                user.ProfilePictureId = ProfilePictureList[0];
+            }
+
+            await _users.ReplaceOneAsync(filter, user);
+            return "Updated";
+        }
+
+        public async Task<IActionResult> GetUserProfilePhotoAsync(string id)
+        {
+            var user = await _users.Find(x => x.Id == id).FirstOrDefaultAsync();
+            if (user == null || string.IsNullOrEmpty(user.ProfilePictureId))
+            {
+                return new NotFoundResult();
+            }
+            return await _fileService.DownloadFileAsync(user.ProfilePictureId);
+        }
+
+        public async Task DeleteUserAsync(string id)
+        {
+            await _users.DeleteOneAsync(user => user.Id == id);
         }
 
         // Instructor
