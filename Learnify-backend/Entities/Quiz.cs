@@ -15,5 +15,8 @@ namespace Learnify_backend.Entities
 
         [BsonElement("questionsId"), BsonRepresentation(BsonType.String)]
         public IEnumerable<string> QuestionsId { get; set; } = new List<string>();
+
+        [BsonElement("passingScore"), BsonRepresentation(BsonType.Double)]
+        public double PassingScore { get; set; }
     }
 }
