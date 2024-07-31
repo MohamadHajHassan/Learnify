@@ -22,6 +22,7 @@ namespace Learnify_backend.Services.EnrollmentService
         public Task<Grade> CreateGradeAsync(CreateGradeRequest request);
         public Task<Grade> UpdateOrCreateGradeAsync(CreateGradeRequest request);
         public Task DeleteGradeAsync(string id);
+        public Task<double> CalculateFinalGradeAsync(string enrollmentId);
 
     }
 }

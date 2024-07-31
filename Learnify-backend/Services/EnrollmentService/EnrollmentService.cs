@@ -60,7 +60,7 @@ namespace Learnify_backend.Services.EnrollmentService
             var courseModules = await _courseService.GetModulesByCourseAsync(courseId);
             int totalModules = courseModules.Count();
             int completedModules = moduleProgress.Values.Count(mp => mp.IsCompleted);
-            return (double)completedModules / totalModules;
+            return (double)completedModules / totalModules * 100;
         }
 
         public async Task<string> UpdateEnrollmentAsync(string id, UpdateEnrollmentRequest request)
@@ -109,15 +109,14 @@ namespace Learnify_backend.Services.EnrollmentService
             }
 
             enrollment = await _enrollments.Find(filter).FirstOrDefaultAsync();
-            if (enrollment.Progress == 1)
+            if (enrollment.Progress == 100)
             {
                 updateDefinition = Builders<Enrollment>.Update
                     .Set(e => e.IsCompleted, true)
-                    .Set(e => e.FinishedOn, DateTime.UtcNow);
+                    .Set(e => e.FinishedOn, DateTime.UtcNow)
+                    .Set(e => e.FinalGrade, await CalculateFinalGradeAsync(enrollment.Id));
 
                 await _enrollments.UpdateOneAsync(filter, updateDefinition);
-
-                // Calculate final grade
 
                 // Send email
 
@@ -281,6 +280,16 @@ namespace Learnify_backend.Services.EnrollmentService
         public async Task DeleteGradeAsync(string id)
         {
             await _grades.DeleteOneAsync(grade => grade.Id == id);
+        }
+
+        public async Task<double> CalculateFinalGradeAsync(string enrollmentId)
+        {
+            var filter = Builders<Enrollment>.Filter.Eq(x => x.Id, enrollmentId);
+            var enrollment = await _enrollments.Find(filter).FirstOrDefaultAsync();
+
+            var grades = await _grades.Find(x => enrollment.GradesId.Contains(x.Id)).ToListAsync();
+            var totalGrades = grades.Sum(g => g.HighestScore);
+            return totalGrades / grades.Count;
         }
     }
 }
