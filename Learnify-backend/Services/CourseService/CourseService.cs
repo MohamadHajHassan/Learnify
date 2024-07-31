@@ -312,7 +312,8 @@ namespace Learnify_backend.Services.CourseService
         {
             var quiz = new Quiz
             {
-                ModuleId = request.ModuleId
+                ModuleId = request.ModuleId,
+                PassingScore = request.PassingScore
             };
             await _quizzes.InsertOneAsync(quiz);
             return quiz;

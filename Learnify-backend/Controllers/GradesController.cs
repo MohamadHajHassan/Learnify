@@ -1,7 +1,6 @@
-﻿using Learnify_backend.Data;
-using Learnify_backend.Entities;
+﻿using Learnify_backend.Entities;
+using Learnify_backend.Services.EnrollmentService;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -11,53 +10,47 @@ namespace Learnify_backend.Controllers
     [ApiController]
     public class GradesController : ControllerBase
     {
-        private readonly IMongoCollection<Grade> _grades;
+        private readonly IEnrollmentService _enrollmentService;
 
-        public GradesController(MongoDbService mongoDbService)
+        public GradesController(IEnrollmentService enrollmentService)
         {
-            _grades = mongoDbService.Database.GetCollection<Grade>("grades");
+            _enrollmentService = enrollmentService;
         }
 
-        // GET: api/<GradesController>
-        [HttpGet]
-        public async Task<IEnumerable<Grade>> GetAllCourses()
+        [HttpGet("/enrollment/{enrollmentId}")]
+        public async Task<ActionResult<IEnumerable<Grade>>> GetGradesByEnrollment(string enrollmentId)
         {
-            return await _grades.Find(FilterDefinition<Grade>.Empty).ToListAsync();
+            var grades = await _enrollmentService.GetGradesByEnrollmentAsync(enrollmentId);
+            return grades is not null ? Ok(grades) : NotFound();
         }
 
-        // GET api/<GradesController>/5
         [HttpGet("{id}")]
-        public ActionResult<Grade> GetGradeById(string id)
+        public async Task<ActionResult<Grade>> GetGradeById(string id)
         {
-            var filter = Builders<Grade>.Filter.Eq(x => x.Id, id);
-            var grade = _grades.Find(filter).FirstOrDefault();
+            var grade = await _enrollmentService.GetGradeByIdAsync(id);
             return grade is not null ? Ok(grade) : NotFound();
         }
 
-        // POST api/<GradesController>
         [HttpPost]
-        public async Task<ActionResult> CreateGrade(Grade grade)
+        public async Task<ActionResult<Grade>> UpdateOrCreateGrade([FromForm] CreateGradeRequest request)
         {
-            await _grades.InsertOneAsync(grade);
+            var grade = await _enrollmentService.UpdateOrCreateGradeAsync(request);
             return CreatedAtAction(nameof(GetGradeById), new { id = grade.Id }, grade);
         }
 
-        // PUT api/<GradesController>/5
-        [HttpPut]
-        public async Task<ActionResult> UpdateGrade(Grade grade)
-        {
-            var filter = Builders<Grade>.Filter.Eq(x => x.Id, grade.Id);
-            await _grades.ReplaceOneAsync(filter, grade);
-            return Ok();
-        }
-
-        // DELETE api/<GradesController>/5
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteGrade(string id)
         {
-            var filter = Builders<Grade>.Filter.Eq(x => x.Id, id);
-            await _grades.DeleteOneAsync(filter);
+            await _enrollmentService.DeleteGradeAsync(id);
             return Ok();
         }
+    }
+
+    public class CreateGradeRequest
+    {
+        public required string EnrollmentId { get; set; }
+        public required string QuizId { get; set; }
+        public Dictionary<string, string> UserAnswers { get; set; } = new Dictionary<string, string>();
+
     }
 }

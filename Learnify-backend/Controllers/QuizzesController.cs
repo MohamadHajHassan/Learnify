@@ -52,5 +52,6 @@ namespace Learnify_backend.Controllers
     public class CreateQuizRequest
     {
         public required string ModuleId { get; set; }
+        public required double PassingScore { get; set; }
     }
 }
