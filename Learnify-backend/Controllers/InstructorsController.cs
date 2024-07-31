@@ -50,6 +50,12 @@ namespace Learnify_backend.Controllers
             await _userService.DeleteInstructorAsync(id);
             return Ok();
         }
+
+        [HttpGet("{id}/profilepicture")]
+        public async Task<IActionResult> GetInstructorProfilePhoto(string id)
+        {
+            return await _userService.GetInstructorProfilePhotoAsync(id);
+        }
     }
 
     public class CreateInstructorRequest

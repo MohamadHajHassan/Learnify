@@ -295,5 +295,15 @@ namespace Learnify_backend.Services.UserService
         {
             await _instructors.DeleteOneAsync(instructor => instructor.Id == id);
         }
+
+        public async Task<IActionResult> GetInstructorProfilePhotoAsync(string id)
+        {
+            var instructor = await _instructors.Find(x => x.Id == id).FirstOrDefaultAsync();
+            if (instructor == null || string.IsNullOrEmpty(instructor.ProfilePictureId))
+            {
+                return new NotFoundResult();
+            }
+            return await _fileService.DownloadFileAsync(instructor.ProfilePictureId);
+        }
     }
 }

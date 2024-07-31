@@ -25,5 +25,7 @@ namespace Learnify_backend.Services.UserService
         Task<Instructor> CreateInstructorAsync(CreateInstructorRequest request);
         Task<string> UpdateInstructorAsync(string id, UpdateInstructorRequest request);
         Task DeleteInstructorAsync(string id);
+        Task<IActionResult> GetInstructorProfilePhotoAsync(string id);
+
     }
 }
