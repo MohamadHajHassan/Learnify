@@ -1,8 +1,7 @@
 ﻿using Learnify_backend.Entities;
 using Learnify_backend.Services.EnrollmentService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace Learnify_backend.Controllers
 {
@@ -17,8 +16,8 @@ namespace Learnify_backend.Controllers
             _enrollmentService = enrollmentService;
         }
 
-        // GET: api/<EnrollmentsController>
         [HttpGet("userId/{userId}")]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Enrollment>>> GetEnrollmentsByUserId(string userId)
         {
             var enrollments = await _enrollmentService.GetEnrollmentsByUserIdAsync(userId);
@@ -26,14 +25,15 @@ namespace Learnify_backend.Controllers
         }
 
         [HttpGet("courseId/{courseId}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<Enrollment>>> GetEnrollmentsByCourseId(string courseId)
         {
             var enrollments = await _enrollmentService.GetEnrollmentsByCourseIdAsync(courseId);
             return enrollments is not null ? Ok(enrollments) : NotFound();
         }
 
-        // GET api/<EnrollmentsController>/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<Enrollment>> GetEnrollmentById(string id)
         {
             var enrollment = await _enrollmentService.GetEnrollmentByIdAsync(id);
@@ -41,6 +41,7 @@ namespace Learnify_backend.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<Enrollment>> CreateEnrollment([FromForm] CreateEnrollmentRequest request)
         {
             var enrollment = await _enrollmentService.CreateEnrollmentAsync(request);
@@ -48,6 +49,7 @@ namespace Learnify_backend.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdateEnrollment(string id, [FromForm] UpdateEnrollmentRequest request)
         {
             var result = await _enrollmentService.UpdateEnrollmentAsync(id, request);
@@ -55,6 +57,7 @@ namespace Learnify_backend.Controllers
         }
 
         [HttpPut("/dropCourse/{id}")]
+        [Authorize]
         public async Task<IActionResult> DropCourse(string id)
         {
             await _enrollmentService.DropCourseAsync(id);

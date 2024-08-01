@@ -1,8 +1,7 @@
 ﻿using Learnify_backend.Entities;
 using Learnify_backend.Services.UserService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace Learnify_backend.Controllers
 {
@@ -18,12 +17,14 @@ namespace Learnify_backend.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<IEnumerable<Instructor>> GetAllInstructors()
         {
             return await _userService.GetAllInstructorsAsync();
         }
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<Instructor>> GetInstructorById(string id)
         {
             var instructor = await _userService.GetInstructorByIdAsync(id);
@@ -31,6 +32,7 @@ namespace Learnify_backend.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> CreateInstructor([FromForm] CreateInstructorRequest request)
         {
             var instructor = await _userService.CreateInstructorAsync(request);
@@ -38,6 +40,7 @@ namespace Learnify_backend.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> UpdateInstructor(string id, [FromForm] UpdateInstructorRequest request)
         {
             string result = await _userService.UpdateInstructorAsync(id, request);
@@ -45,6 +48,7 @@ namespace Learnify_backend.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteInstructor(string id)
         {
             await _userService.DeleteInstructorAsync(id);
@@ -52,6 +56,7 @@ namespace Learnify_backend.Controllers
         }
 
         [HttpGet("{id}/profilepicture")]
+        [Authorize]
         public async Task<IActionResult> GetInstructorProfilePhoto(string id)
         {
             return await _userService.GetInstructorProfilePhotoAsync(id);

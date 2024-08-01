@@ -3,8 +3,6 @@ using Learnify_backend.Services.CourseService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace Learnify_backend.Controllers
 {
     [Route("api/[controller]")]
@@ -18,7 +16,6 @@ namespace Learnify_backend.Controllers
             _courseService = courseService;
         }
 
-        // GET: api/<CoursesController>
         [HttpGet]
         [Authorize]
         public async Task<IEnumerable<Course>> GetAllCourses()
@@ -34,7 +31,6 @@ namespace Learnify_backend.Controllers
             return Ok(courses);
         }
 
-        // GET api/<CoursesController>/5
         [HttpGet("{id}")]
         [Authorize]
         public async Task<ActionResult<Course>> GetCourseById(string id)
@@ -43,7 +39,6 @@ namespace Learnify_backend.Controllers
             return course is not null ? Ok(course) : NotFound();
         }
 
-        // POST api/<CoursesController>
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> CreateCourse(CreateCourseRequest request)
@@ -52,7 +47,6 @@ namespace Learnify_backend.Controllers
             return CreatedAtAction(nameof(GetCourseById), new { id = course.Id }, course);
         }
 
-        // PUT api/<CoursesController>/5
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> UpdateCourse(string courseId, [FromBody] UpdateCourseRequest request)
@@ -65,7 +59,6 @@ namespace Learnify_backend.Controllers
             return Ok();
         }
 
-        // DELETE api/<CoursesController>/5
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteCourse(string id)

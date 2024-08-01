@@ -4,8 +4,6 @@ using Learnify_backend.Services.UserService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace Learnify_backend.Controllers
 {
     [Route("api/[controller]")]
@@ -15,15 +13,12 @@ namespace Learnify_backend.Controllers
         private readonly IJWTTokenGenerator _jwtToken;
         private readonly IUserService _userService;
 
-        public UsersController(
-            IJWTTokenGenerator jwtToken,
-            IUserService userService)
+        public UsersController(IJWTTokenGenerator jwtToken, IUserService userService)
         {
             _jwtToken = jwtToken;
             _userService = userService;
         }
 
-        // GET: api/<UsersController>
         [HttpGet]
         [Authorize(Roles = "Admin")]
         public async Task<IEnumerable<User>> GetAllUsers()
@@ -31,7 +26,6 @@ namespace Learnify_backend.Controllers
             return await _userService.GetAllUsersAsync();
         }
 
-        // GET api/<UsersController>/5
         [HttpGet("{id}")]
         [Authorize]
         public async Task<ActionResult> GetUserById(string id)
@@ -52,7 +46,6 @@ namespace Learnify_backend.Controllers
             {
                 return BadRequest("Passwords do not match!");
             }
-            var user = await _userService.GetUserByEmailAsync(request.Email);
             return Ok();
         }
 
@@ -94,11 +87,11 @@ namespace Learnify_backend.Controllers
             return Ok(loginResponse);
         }
 
-        [HttpPut("setadmin/{userId}")]
+        [HttpPut("setadmin/{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> SetAdmin(string userId)
+        public async Task<ActionResult> SetAdmin(string id)
         {
-            var result = await _userService.SetAdminAsync(userId);
+            var result = await _userService.SetAdminAsync(id);
             if (result == "Not Found")
             {
                 return NotFound();
@@ -106,11 +99,11 @@ namespace Learnify_backend.Controllers
             return Ok();
         }
 
-        [HttpPut("{userId}")]
+        [HttpPut("{id}")]
         [Authorize]
-        public async Task<ActionResult> UpdateUser(string userId, [FromForm] UpdateUserRequest request)
+        public async Task<ActionResult> UpdateUser(string id, [FromForm] UpdateUserRequest request)
         {
-            var result = await _userService.UpdateUserAsync(userId, request);
+            var result = await _userService.UpdateUserAsync(id, request);
             if (result == "Not Found")
             {
                 return NotFound();
@@ -118,7 +111,6 @@ namespace Learnify_backend.Controllers
             return Ok();
         }
 
-        // DELETE api/<UsersController>/5
         [HttpDelete("{id}")]
         [Authorize]
         public async Task<ActionResult> DeleteUser(string id)
@@ -127,11 +119,11 @@ namespace Learnify_backend.Controllers
             return Ok();
         }
 
-        [HttpGet("{userId}/profilepicture")]
+        [HttpGet("{id}/profilepicture")]
         [Authorize]
-        public async Task<IActionResult> GetProfilePhoto(string userId)
+        public async Task<IActionResult> GetProfilePhoto(string id)
         {
-            return await _userService.GetUserProfilePhotoAsync(userId);
+            return await _userService.GetUserProfilePhotoAsync(id);
         }
     }
 

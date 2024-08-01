@@ -201,7 +201,7 @@ namespace Learnify_backend.Services.CourseService
         {
             var module = new Module
             {
-                CourseId = request.courseId,
+                CourseId = request.CourseId,
                 Ordre = request.Ordre
             };
             await _modules.InsertOneAsync(module);

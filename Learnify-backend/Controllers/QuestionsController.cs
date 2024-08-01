@@ -1,8 +1,7 @@
 ﻿using Learnify_backend.Entities;
 using Learnify_backend.Services.CourseService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace Learnify_backend.Controllers
 {
@@ -17,29 +16,32 @@ namespace Learnify_backend.Controllers
             _courseService = courseService;
         }
 
-        [HttpGet("{quizId}/questions")]
+        [HttpGet("/quizId/{quizId}/questions")]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Question>>> GetQuestionsByQuiz(string quizId)
         {
             var questions = await _courseService.GetQuestionsByQuizAsync(quizId);
             return questions is not null ? Ok(questions) : NotFound();
         }
 
-        // GET api/<QuestionsController>/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<Question>> GetQuestionById(string id)
         {
             var question = await _courseService.GetQuestionByIdAsync(id);
             return question is not null ? Ok(question) : NotFound();
         }
 
-        [HttpPost("{quizId}/questions")]
+        [HttpPost("/quizId/{quizId}/questions")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> CreateQuestion([FromForm] CreateQuestionRequest request)
         {
             var question = await _courseService.CreateQuestionAsync(request);
             return CreatedAtAction(nameof(GetQuestionById), new { id = question.Id }, question);
         }
 
-        [HttpPut("{quizId}/questions/{id}")]
+        [HttpPut("quizId/{quizId}/questions/{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> UpdateQuestion(string id, [FromForm] UpdateQuestionRequest request)
         {
             var result = await _courseService.UpdateQuestionAsync(id, request);
@@ -50,8 +52,8 @@ namespace Learnify_backend.Controllers
             return Ok();
         }
 
-        // DELETE api/<QuestionsController>/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteQuestion(string id)
         {
             await _courseService.DeleteQuestionAsync(id);

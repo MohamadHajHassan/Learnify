@@ -1,8 +1,7 @@
 ﻿using Learnify_backend.Entities;
 using Learnify_backend.Services.EnrollmentService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace Learnify_backend.Controllers
 {
@@ -17,7 +16,8 @@ namespace Learnify_backend.Controllers
             _enrollmentService = enrollmentService;
         }
 
-        [HttpGet("/enrollment/{enrollmentId}")]
+        [HttpGet("/enrollmentId/{enrollmentId}")]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Grade>>> GetGradesByEnrollment(string enrollmentId)
         {
             var grades = await _enrollmentService.GetGradesByEnrollmentAsync(enrollmentId);
@@ -25,6 +25,7 @@ namespace Learnify_backend.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<Grade>> GetGradeById(string id)
         {
             var grade = await _enrollmentService.GetGradeByIdAsync(id);
@@ -32,6 +33,7 @@ namespace Learnify_backend.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<Grade>> UpdateOrCreateGrade([FromForm] CreateGradeRequest request)
         {
             var grade = await _enrollmentService.UpdateOrCreateGradeAsync(request);
@@ -39,6 +41,7 @@ namespace Learnify_backend.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<ActionResult> DeleteGrade(string id)
         {
             await _enrollmentService.DeleteGradeAsync(id);
@@ -51,6 +54,5 @@ namespace Learnify_backend.Controllers
         public required string EnrollmentId { get; set; }
         public required string QuizId { get; set; }
         public Dictionary<string, string> UserAnswers { get; set; } = new Dictionary<string, string>();
-
     }
 }

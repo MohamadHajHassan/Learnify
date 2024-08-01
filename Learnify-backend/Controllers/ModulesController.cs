@@ -3,8 +3,6 @@ using Learnify_backend.Services.CourseService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace Learnify_backend.Controllers
 {
     [Route("api/[controller]")]
@@ -18,7 +16,7 @@ namespace Learnify_backend.Controllers
             _courseService = courseService;
         }
 
-        [HttpGet("{courseId}/modules")]
+        [HttpGet("/courseId/{courseId}/modules")]
         [Authorize]
         public async Task<ActionResult<IEnumerable<Module>>> GetModulesByCourse(string courseId)
         {
@@ -26,7 +24,6 @@ namespace Learnify_backend.Controllers
             return modules is not null ? Ok(modules) : NotFound();
         }
 
-        // GET api/<ModulesController>/5
         [HttpGet("{id}")]
         [Authorize]
         public async Task<ActionResult<Module>> GetModuleById(string id)
@@ -35,7 +32,7 @@ namespace Learnify_backend.Controllers
             return module is not null ? Ok(module) : NotFound();
         }
 
-        [HttpPost("{courseId}/modules")]
+        [HttpPost("/courseId/{courseId}/modules")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> CreateModule([FromBody] CreateModuleRequest request)
         {
@@ -43,7 +40,7 @@ namespace Learnify_backend.Controllers
             return CreatedAtAction(nameof(GetModuleById), new { id = module.Id }, module);
         }
 
-        [HttpPut("{courseId}/modules/{id}")]
+        [HttpPut("/courseId/{courseId}/modules/{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> UpdateModule(string id, [FromBody] UpdateModuleRequest request)
         {
@@ -55,7 +52,7 @@ namespace Learnify_backend.Controllers
             return Ok();
         }
 
-        [HttpDelete("{courseId}/modules/{id}")]
+        [HttpDelete("/courseId/{courseId}/modules/{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteModule(string id)
         {
@@ -66,7 +63,7 @@ namespace Learnify_backend.Controllers
     public class CreateModuleRequest
     {
         public required int Ordre { get; set; }
-        public required string courseId { get; set; }
+        public required string CourseId { get; set; }
     }
 
     public class UpdateModuleRequest
