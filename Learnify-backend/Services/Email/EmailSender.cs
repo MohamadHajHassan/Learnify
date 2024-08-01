@@ -10,10 +10,21 @@ namespace Learnify_backend.Services.Email
         {
             _configuration = configuration;
         }
-        public async Task SendEmailAsync(string fromAddress, string toAddress, string subject, string message)
+        public async Task SendEmailAsync(
+            string fromAddress,
+            string toAddress,
+            string subject,
+            string message,
+            List<Attachment> attachments = null)
         {
             var MailMessage = new MailMessage(fromAddress, toAddress, subject, message);
-
+            if (attachments != null)
+            {
+                foreach (var attachment in attachments)
+                {
+                    MailMessage.Attachments.Add(attachment);
+                }
+            }
             using (var client = new SmtpClient(_configuration["SMTP:Host"], int.Parse(_configuration["SMTP:Port"])))
             {
                 client.UseDefaultCredentials = false;
