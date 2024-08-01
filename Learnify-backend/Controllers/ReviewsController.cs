@@ -1,5 +1,5 @@
-﻿using Learnify_backend.Data;
-using Learnify_backend.Entities;
+﻿using Learnify_backend.Entities;
+using Learnify_backend.Services.MongoDbService;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 
@@ -13,7 +13,7 @@ namespace Learnify_backend.Controllers
     {
         private readonly IMongoCollection<Review> _reviews;
 
-        public ReviewsController(MongoDbService mongoDbService)
+        public ReviewsController(IMongoDbService mongoDbService)
         {
             _reviews = mongoDbService.Database.GetCollection<Review>("reviews");
         }

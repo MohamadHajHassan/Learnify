@@ -1,7 +1,7 @@
 ﻿using Learnify_backend.Controllers;
-using Learnify_backend.Data;
 using Learnify_backend.Entities;
 using Learnify_backend.Services.FileService;
+using Learnify_backend.Services.MongoDbService;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -18,7 +18,7 @@ namespace Learnify_backend.Services.CourseService
         private readonly IMongoCollection<Instructor> _instructors;
         private readonly IFileService _fileService;
 
-        public CourseService(MongoDbService mongoDbService, IFileService fileService)
+        public CourseService(IMongoDbService mongoDbService, IFileService fileService)
         {
             _courses = mongoDbService.Database.GetCollection<Course>("courses");
             _modules = mongoDbService.Database.GetCollection<Module>("modules");

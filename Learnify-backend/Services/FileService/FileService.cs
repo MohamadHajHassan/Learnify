@@ -1,4 +1,4 @@
-﻿using Learnify_backend.Data;
+﻿using Learnify_backend.Services.MongoDbService;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver.GridFS;
@@ -9,7 +9,7 @@ namespace Learnify_backend.Services.FileService
     {
         private readonly GridFSBucket _gridFSBucket;
 
-        public FileService(MongoDbService mongoDbService)
+        public FileService(IMongoDbService mongoDbService)
         {
             _gridFSBucket = new GridFSBucket(mongoDbService.Database);
         }

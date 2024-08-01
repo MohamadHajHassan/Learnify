@@ -1,8 +1,8 @@
 ﻿using MongoDB.Driver;
 
-namespace Learnify_backend.Data
+namespace Learnify_backend.Services.MongoDbService
 {
-    public class MongoDbService
+    public class MongoDbService : IMongoDbService
     {
         private readonly IConfiguration _configuration;
         private readonly IMongoDatabase _database;

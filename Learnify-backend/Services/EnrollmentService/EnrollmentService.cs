@@ -1,7 +1,7 @@
 ﻿using Learnify_backend.Controllers;
-using Learnify_backend.Data;
 using Learnify_backend.Entities;
 using Learnify_backend.Services.CourseService;
+using Learnify_backend.Services.MongoDbService;
 using MongoDB.Driver;
 namespace Learnify_backend.Services.EnrollmentService
 {
@@ -13,7 +13,7 @@ namespace Learnify_backend.Services.EnrollmentService
         private readonly IMongoCollection<Quiz> _quizzes;
         private readonly ICourseService _courseService;
 
-        public EnrollmentService(MongoDbService mongoDbService, ICourseService courseService)
+        public EnrollmentService(IMongoDbService mongoDbService, ICourseService courseService)
         {
             _enrollments = mongoDbService.Database.GetCollection<Enrollment>("enrollments");
             _grades = mongoDbService.Database.GetCollection<Grade>("grades");

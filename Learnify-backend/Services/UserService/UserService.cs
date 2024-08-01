@@ -1,8 +1,8 @@
 ﻿using Learnify_backend.Controllers;
-using Learnify_backend.Data;
 using Learnify_backend.Entities;
 using Learnify_backend.Services.Email;
 using Learnify_backend.Services.FileService;
+using Learnify_backend.Services.MongoDbService;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using System.Web;
@@ -21,7 +21,7 @@ namespace Learnify_backend.Services.UserService
             IConfiguration configuration,
             IEmailSender emailSender,
             IFileService fileService,
-            MongoDbService mongoDbService)
+            IMongoDbService mongoDbService)
         {
             _users = mongoDbService.Database.GetCollection<User>("users");
             _configuration = configuration;
@@ -88,7 +88,7 @@ namespace Learnify_backend.Services.UserService
 
         public async Task<string> RegisterUserAsync(RegisterUserRequest request)
         {
-            var existingUser = GetUserByEmailAsync(request.Email);
+            var existingUser = await GetUserByEmailAsync(request.Email);
             if (existingUser != null)
             {
                 return "User with this email already exists!";
