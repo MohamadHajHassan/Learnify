@@ -15,7 +15,7 @@ namespace Learnify_backend.Entities
 
         [BsonRequired]
         [BsonElement("password"), BsonRepresentation(BsonType.String)]
-        public string? Password { get; set; } // Should be hashed before storing
+        public string? Password { get; set; }
 
         [BsonElement("firstName"), BsonRepresentation(BsonType.String)]
         public string? FirstName { get; set; }
@@ -27,7 +27,7 @@ namespace Learnify_backend.Entities
         public string? ProfilePictureId { get; set; }
 
         [BsonElement("role"), BsonRepresentation(BsonType.String)]
-        public string? Role { get; set; }  // "student", "admin"
+        public string? Role { get; set; }
 
         [BsonElement("isEmailConfirmed"), BsonRepresentation(BsonType.Boolean)]
         public bool IsEmailConfirmed { get; set; } = false;
