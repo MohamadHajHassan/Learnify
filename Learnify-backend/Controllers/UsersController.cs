@@ -1,5 +1,5 @@
-﻿using Learnify_backend.Data;
-using Learnify_backend.Entities;
+﻿using Learnify_backend.Entities;
+using Learnify_backend.Services.TokenService;
 using Learnify_backend.Services.UserService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +12,11 @@ namespace Learnify_backend.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly JWTTokenGenerator _jwtToken;
+        private readonly IJWTTokenGenerator _jwtToken;
         private readonly IUserService _userService;
 
         public UsersController(
-            JWTTokenGenerator jwtToken,
+            IJWTTokenGenerator jwtToken,
             IUserService userService)
         {
             _jwtToken = jwtToken;

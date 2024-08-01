@@ -4,9 +4,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace Learnify_backend.Data
+namespace Learnify_backend.Services.TokenService
 {
-    public class JWTTokenGenerator
+    public class JWTTokenGenerator : IJWTTokenGenerator
     {
         private readonly IConfiguration _configuration;
 

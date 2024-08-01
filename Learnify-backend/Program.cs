@@ -3,6 +3,7 @@ using Learnify_backend.Services.CourseService;
 using Learnify_backend.Services.Email;
 using Learnify_backend.Services.EnrollmentService;
 using Learnify_backend.Services.FileService;
+using Learnify_backend.Services.TokenService;
 using Learnify_backend.Services.UserService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -14,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<MongoDbService>();
 
-builder.Services.AddScoped<JWTTokenGenerator>();
+builder.Services.AddScoped<IJWTTokenGenerator, JWTTokenGenerator>();
 
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 
