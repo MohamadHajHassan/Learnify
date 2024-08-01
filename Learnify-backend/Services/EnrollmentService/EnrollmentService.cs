@@ -1,8 +1,14 @@
-﻿using Learnify_backend.Controllers;
+﻿using iTextSharp.text;
+using iTextSharp.text.pdf;
+using Learnify_backend.Controllers;
 using Learnify_backend.Entities;
 using Learnify_backend.Services.CourseService;
+using Learnify_backend.Services.Email;
 using Learnify_backend.Services.MongoDbService;
+using Learnify_backend.Services.UserService;
 using MongoDB.Driver;
+using System.Net.Mail;
+using System.Net.Mime;
 namespace Learnify_backend.Services.EnrollmentService
 {
     public class EnrollmentService : IEnrollmentService
@@ -11,15 +17,28 @@ namespace Learnify_backend.Services.EnrollmentService
         private readonly IMongoCollection<Grade> _grades;
         private readonly IMongoCollection<Question> _questions;
         private readonly IMongoCollection<Quiz> _quizzes;
+        private readonly IMongoCollection<Certificate> _certificates;
+        private readonly IConfiguration _configuration;
         private readonly ICourseService _courseService;
+        private readonly IUserService _userService;
+        private readonly IEmailSender _emailSender;
 
-        public EnrollmentService(IMongoDbService mongoDbService, ICourseService courseService)
+        public EnrollmentService(
+            IMongoDbService mongoDbService,
+            ICourseService courseService,
+            IUserService userService,
+            IEmailSender emailSender,
+            IConfiguration configuration)
         {
             _enrollments = mongoDbService.Database.GetCollection<Enrollment>("enrollments");
             _grades = mongoDbService.Database.GetCollection<Grade>("grades");
             _questions = mongoDbService.Database.GetCollection<Question>("questions");
             _quizzes = mongoDbService.Database.GetCollection<Quiz>("quizzes");
+            _certificates = mongoDbService.Database.GetCollection<Certificate>("certificates");
             _courseService = courseService;
+            _userService = userService;
+            _emailSender = emailSender;
+            _configuration = configuration;
         }
 
         // Enrollment
@@ -118,11 +137,15 @@ namespace Learnify_backend.Services.EnrollmentService
 
                 await _enrollments.UpdateOneAsync(filter, updateDefinition);
 
+                var certificate = await GetCertificateByEnrollmentIdAsync(enrollment.Id);
+                if (certificate == null || !certificate.IsSent)
+                {
+                    await GenerateCertificateAsync(enrollment.Id);
+                }
+
                 // Send email
 
                 // Send notification
-
-                // Send certificate
             }
 
             return "Updated";
@@ -290,6 +313,97 @@ namespace Learnify_backend.Services.EnrollmentService
             var grades = await _grades.Find(x => enrollment.GradesId.Contains(x.Id)).ToListAsync();
             var totalGrades = grades.Sum(g => g.HighestScore);
             return totalGrades / grades.Count;
+        }
+
+        // Certificate
+        public async Task<Certificate> GetCertificateByEnrollmentIdAsync(string enrollmentId)
+        {
+            var filter = Builders<Certificate>.Filter.Eq(x => x.EnrollmentId, enrollmentId);
+            return await _certificates.Find(filter).FirstOrDefaultAsync();
+
+        }
+        public async Task GenerateCertificateAsync(string enrollmentId)
+        {
+            var certificate = new Certificate
+            {
+                EnrollmentId = enrollmentId,
+            };
+            await _certificates.InsertOneAsync(certificate);
+
+            certificate = await GetCertificateByEnrollmentIdAsync(enrollmentId);
+            certificate.CertificateNumber = GenerateUniqueCertificateNumber(certificate.IssuedOn);
+
+            await _certificates.ReplaceOneAsync(x => x.Id == certificate.Id, certificate);
+
+            var enrollment = await GetEnrollmentByIdAsync(enrollmentId);
+            var user = await _userService.GetUserByIdAsync(enrollment.UserId);
+            var course = await _courseService.GetCourseByIdAsync(enrollment.CourseId);
+
+            var pdfBytes = await GenerateCertificatePdfAsync(certificate, user, course);
+
+            await SendCertificateEmailAsync(pdfBytes, certificate, enrollment, user, course);
+
+            certificate.IsSent = true;
+
+            await _certificates.ReplaceOneAsync(x => x.Id == certificate.Id, certificate);
+        }
+
+        private string GenerateUniqueCertificateNumber(DateTime dateTime)
+        {
+            var random = new Random();
+            var randomNumber = random.Next(100000, 999999);
+            var certificateNumber = $"CERT_{dateTime}-{randomNumber}";
+            return certificateNumber;
+        }
+
+        private async Task<byte[]> GenerateCertificatePdfAsync(
+            Certificate certificate,
+            User user,
+            Course course)
+        {
+            var pdfDoc = new Document();
+            var memoryStream = new MemoryStream();
+            var writer = PdfWriter.GetInstance(pdfDoc, memoryStream);
+            pdfDoc.Open();
+
+            var headerParagraph = new Paragraph("Learnify");
+            headerParagraph.Alignment = Element.ALIGN_CENTER;
+            pdfDoc.Add(headerParagraph);
+
+            var paragraph = new Paragraph($"Certificate of Completion\n\n" +
+                $"Certificate Number: {certificate.CertificateNumber}\n\n" +
+                $"Awarded to:\n" +
+                $"{user.FirstName + " " + user.LastName}\n\n" +
+                $"For successful completion of the\n" +
+                $"{course.Title} course\n\n" +
+                $"Issued on: {certificate.IssuedOn}");
+            pdfDoc.Add(paragraph);
+
+            pdfDoc.Close();
+            return memoryStream.ToArray();
+        }
+
+        private async Task SendCertificateEmailAsync(
+            byte[] pdfBytes,
+            Certificate certificate,
+            Enrollment enrollment,
+            User user,
+            Course course
+            )
+        {
+            var attachmentStream = new MemoryStream(pdfBytes);
+            var attachment = new Attachment(attachmentStream, "certificate.pdf", MediaTypeNames.Application.Pdf);
+
+            await _emailSender.SendEmailAsync(
+                _configuration["ReturnPaths:SenderEmail"],
+                user.Email,
+                "Certificate of Completion",
+                $"Dear {user.FirstName + " " + user.LastName},\n\n" +
+                $"Congratulations! You have successfully completed the {course.Title} course.\n\n" +
+                $"Please find attached your certificate of completion.\n\n" +
+                $"Best regards,\n" +
+                "Learnify Team",
+                new List<Attachment> { attachment });
         }
     }
 }

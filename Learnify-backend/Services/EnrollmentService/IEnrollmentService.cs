@@ -24,5 +24,8 @@ namespace Learnify_backend.Services.EnrollmentService
         public Task DeleteGradeAsync(string id);
         public Task<double> CalculateFinalGradeAsync(string enrollmentId);
 
+        // Certificate
+        public Task<Certificate> GetCertificateByEnrollmentIdAsync(string enrollmentId);
+        public Task GenerateCertificateAsync(string enrollmentId);
     }
 }
