@@ -34,7 +34,7 @@ namespace Learnify_backend.Controllers
 
         [HttpPost("/courseId/{courseId}/modules")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> CreateModule([FromBody] CreateModuleRequest request)
+        public async Task<ActionResult> CreateModule([FromForm] CreateModuleRequest request)
         {
             var module = await _courseService.CreateModuleAsync(request);
             return CreatedAtAction(nameof(GetModuleById), new { id = module.Id }, module);
@@ -42,7 +42,7 @@ namespace Learnify_backend.Controllers
 
         [HttpPut("/courseId/{courseId}/modules/{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> UpdateModule(string id, [FromBody] UpdateModuleRequest request)
+        public async Task<ActionResult> UpdateModule(string id, [FromForm] UpdateModuleRequest request)
         {
             var result = await _courseService.UpdateModuleAsync(id, request);
             if (result == "Not Found")
