@@ -16,7 +16,7 @@ namespace Learnify_backend.Controllers
             _courseService = courseService;
         }
 
-        [HttpGet("/moduleId/{moduleId}/lessons")]
+        [HttpGet("moduleId/{moduleId}/lessons")]
         [Authorize]
         public async Task<ActionResult<IEnumerable<Lesson>>> GetLessonsByModule(string moduleId)
         {
@@ -32,7 +32,7 @@ namespace Learnify_backend.Controllers
             return lesson is not null ? Ok(lesson) : NotFound();
         }
 
-        [HttpPost("/moduleId/{moduleId}/lessons")]
+        [HttpPost("moduleId/{moduleId}/lessons")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> CreateLesson([FromForm] CreateLessonRequest request)
         {
@@ -40,7 +40,7 @@ namespace Learnify_backend.Controllers
             return CreatedAtAction(nameof(GetLessonById), new { id = lesson.Id }, lesson);
         }
 
-        [HttpPut("/moduleId/{moduleId}/lessons/{id}")]
+        [HttpPut("moduleId/{moduleId}/lessons/{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> UpdateLesson(string id, [FromForm] UpdateLessonRequest request)
         {

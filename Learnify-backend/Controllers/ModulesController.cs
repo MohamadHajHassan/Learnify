@@ -16,7 +16,7 @@ namespace Learnify_backend.Controllers
             _courseService = courseService;
         }
 
-        [HttpGet("/courseId/{courseId}/modules")]
+        [HttpGet("courseId/{courseId}/modules")]
         [Authorize]
         public async Task<ActionResult<IEnumerable<Module>>> GetModulesByCourse(string courseId)
         {
@@ -32,7 +32,7 @@ namespace Learnify_backend.Controllers
             return module is not null ? Ok(module) : NotFound();
         }
 
-        [HttpPost("/courseId/{courseId}/modules")]
+        [HttpPost("courseId/{courseId}/modules")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> CreateModule([FromForm] CreateModuleRequest request)
         {
@@ -40,7 +40,7 @@ namespace Learnify_backend.Controllers
             return CreatedAtAction(nameof(GetModuleById), new { id = module.Id }, module);
         }
 
-        [HttpPut("/courseId/{courseId}/modules/{id}")]
+        [HttpPut("courseId/{courseId}/modules/{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> UpdateModule(string id, [FromForm] UpdateModuleRequest request)
         {
@@ -52,7 +52,7 @@ namespace Learnify_backend.Controllers
             return Ok();
         }
 
-        [HttpDelete("/courseId/{courseId}/modules/{id}")]
+        [HttpDelete("courseId/{courseId}/modules/{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteModule(string id)
         {

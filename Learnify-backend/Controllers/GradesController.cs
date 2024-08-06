@@ -16,7 +16,7 @@ namespace Learnify_backend.Controllers
             _enrollmentService = enrollmentService;
         }
 
-        [HttpGet("/enrollmentId/{enrollmentId}")]
+        [HttpGet("enrollmentId/{enrollmentId}")]
         [Authorize]
         public async Task<ActionResult<IEnumerable<Grade>>> GetGradesByEnrollment(string enrollmentId)
         {

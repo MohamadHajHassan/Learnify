@@ -16,7 +16,7 @@ namespace Learnify_backend.Controllers
             _courseService = courseService;
         }
 
-        [HttpGet("/moduleId/{moduleId}/quiz")]
+        [HttpGet("moduleId/{moduleId}/quiz")]
         [Authorize]
         public async Task<ActionResult<Quiz>> GetQuizByModule(string moduleId)
         {
@@ -32,7 +32,7 @@ namespace Learnify_backend.Controllers
             return quiz is not null ? Ok(quiz) : NotFound();
         }
 
-        [HttpPost("/moduleId/{moduleId}/quiz")]
+        [HttpPost("moduleId/{moduleId}/quiz")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> CreateQuiz([FromForm] CreateQuizRequest request)
         {
