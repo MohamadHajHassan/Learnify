@@ -157,6 +157,7 @@ namespace Learnify_backend.Services.EnrollmentService
             var enrollment = await _enrollments.Find(filter).FirstOrDefaultAsync();
 
             enrollment.IsDropped = true;
+            await _enrollments.ReplaceOneAsync(filter, enrollment);
         }
 
         // Grade

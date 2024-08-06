@@ -56,7 +56,7 @@ namespace Learnify_backend.Controllers
             return result == "Not Found" ? NotFound() : Ok();
         }
 
-        [HttpPut("/dropCourse/{id}")]
+        [HttpPut("dropCourse/{id}")]
         [Authorize]
         public async Task<IActionResult> DropCourse(string id)
         {
