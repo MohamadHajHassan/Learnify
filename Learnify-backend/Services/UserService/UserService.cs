@@ -71,8 +71,8 @@ namespace Learnify_backend.Services.UserService
         {
             var uriBuilder = new UriBuilder(_configuration["ReturnPaths:ConfirmEmail"]);
             var query = HttpUtility.ParseQueryString(uriBuilder.Query);
+            query["id"] = userId;
             query["token"] = token;
-            query["userid"] = userId;
             uriBuilder.Query = query.ToString();
             return uriBuilder.ToString();
 
@@ -166,6 +166,21 @@ namespace Learnify_backend.Services.UserService
             }
 
             user.Role = "Admin";
+            await _users.ReplaceOneAsync(filter, user);
+            return "Updated";
+        }
+
+        public async Task<string> SetStudentAsync(string id)
+        {
+            var filter = Builders<User>.Filter.Eq(x => x.Id, id);
+            var user = await _users.Find(filter).FirstOrDefaultAsync();
+
+            if (user == null)
+            {
+                return "Not Found";
+            }
+
+            user.Role = "Student";
             await _users.ReplaceOneAsync(filter, user);
             return "Updated";
         }

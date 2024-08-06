@@ -15,6 +15,7 @@ namespace Learnify_backend.Services.UserService
         Task<string> ConfirmEmailAsync(string id, string token);
         Task<string> LoginUserAsync(LoginUserRequest request);
         Task<string> SetAdminAsync(string id);
+        Task<string> SetStudentAsync(string id);
         Task<string> UpdateUserAsync(string id, UpdateUserRequest request);
         Task<IActionResult> GetUserProfilePhotoAsync(string id);
         Task DeleteUserAsync(string id);
