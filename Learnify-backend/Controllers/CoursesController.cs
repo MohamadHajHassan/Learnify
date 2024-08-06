@@ -17,7 +17,6 @@ namespace Learnify_backend.Controllers
         }
 
         [HttpGet]
-        [Authorize]
         public async Task<IEnumerable<Course>> GetAllCourses()
         {
             return await _courseService.GetAllCoursesAsync();
@@ -32,7 +31,6 @@ namespace Learnify_backend.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize]
         public async Task<ActionResult<Course>> GetCourseById(string id)
         {
             var course = await _courseService.GetCourseByIdAsync(id);
@@ -41,7 +39,7 @@ namespace Learnify_backend.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> CreateCourse(CreateCourseRequest request)
+        public async Task<ActionResult> CreateCourse([FromForm] CreateCourseRequest request)
         {
             var course = await _courseService.CreateCourseAsync(request);
             return CreatedAtAction(nameof(GetCourseById), new { id = course.Id }, course);
@@ -49,7 +47,7 @@ namespace Learnify_backend.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> UpdateCourse(string courseId, [FromBody] UpdateCourseRequest request)
+        public async Task<ActionResult> UpdateCourse(string courseId, [FromForm] UpdateCourseRequest request)
         {
             string result = await _courseService.UpdateCourseAsync(courseId, request);
             if (result == "Not Found")
