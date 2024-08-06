@@ -49,7 +49,7 @@ namespace Learnify_backend.Controllers
             return Ok();
         }
 
-        [HttpPost("confirmemail")]
+        [HttpGet("confirmemail")]
         public async Task<ActionResult> ConfirmEmail(string id, string token)
         {
             var result = await _userService.ConfirmEmailAsync(id, token);
@@ -92,6 +92,18 @@ namespace Learnify_backend.Controllers
         public async Task<ActionResult> SetAdmin(string id)
         {
             var result = await _userService.SetAdminAsync(id);
+            if (result == "Not Found")
+            {
+                return NotFound();
+            }
+            return Ok();
+        }
+
+        [HttpPut("setstudent/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> SetStudent(string id)
+        {
+            var result = await _userService.SetStudentAsync(id);
             if (result == "Not Found")
             {
                 return NotFound();
