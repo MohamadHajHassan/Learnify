@@ -1,6 +1,6 @@
 ﻿using Learnify_backend.Controllers;
 using Learnify_backend.Entities;
-using Learnify_backend.Services.Email;
+using Learnify_backend.Services.EmailService;
 using Learnify_backend.Services.FileService;
 using Learnify_backend.Services.MongoDbService;
 using Microsoft.AspNetCore.Mvc;

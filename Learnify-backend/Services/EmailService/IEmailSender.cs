@@ -1,6 +1,6 @@
 ﻿using System.Net.Mail;
 
-namespace Learnify_backend.Services.Email
+namespace Learnify_backend.Services.EmailService
 {
     public interface IEmailSender
     {
